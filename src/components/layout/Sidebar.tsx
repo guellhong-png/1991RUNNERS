@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Profile } from '@/types'
-import { Calendar, Megaphone, Wallet, Settings, LogOut, Home, Users, BookOpen, ClipboardList, Archive, ChevronDown, ChevronRight, Newspaper, Star, MessageSquare, Menu, X } from 'lucide-react'
+import { Calendar, Megaphone, Wallet, Settings, LogOut, Home, Users, BookOpen, ClipboardList, Archive, ChevronDown, ChevronRight, Newspaper, Star, MessageSquare, Menu, X, Pencil } from 'lucide-react'
 import { useState } from 'react'
 
 export default function Sidebar({ profile }: { profile: Profile }) {
@@ -12,10 +12,29 @@ export default function Sidebar({ profile }: { profile: Profile }) {
   const supabase = createClient()
   const [boardOpen, setBoardOpen] = useState(pathname.startsWith('/board'))
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [editProfileOpen, setEditProfileOpen] = useState(false)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileForm, setProfileForm] = useState({
+    name: profile.name ?? '',
+    phone: (profile as any).phone ?? '',
+    birthday: (profile as any).birthday ?? '',
+    instagram: (profile as any).instagram ?? '',
+    pb_full: (profile as any).pb_full ?? '',
+    pb_10k: (profile as any).pb_10k ?? '',
+    bio: (profile as any).bio ?? '',
+  })
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
+    router.refresh()
+  }
+
+  const handleProfileSave = async () => {
+    setProfileSaving(true)
+    await supabase.from('profiles').update(profileForm).eq('id', profile.id)
+    setProfileSaving(false)
+    setEditProfileOpen(false)
     router.refresh()
   }
 
@@ -39,12 +58,15 @@ export default function Sidebar({ profile }: { profile: Profile }) {
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-[#e94560] flex items-center justify-center text-sm font-bold shrink-0">{profile.name[0]}</div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-medium truncate">{profile.name}</p>
             <span className={`text-xs px-1.5 py-0.5 rounded ${profile.role === 'admin' ? 'bg-yellow-400/20 text-yellow-300' : 'bg-white/10 text-gray-400'}`}>
               {profile.role === 'admin' ? '운영진' : (profile as any).grade || '준회원'}
             </span>
           </div>
+          <button onClick={() => setEditProfileOpen(true)} className="text-gray-400 hover:text-white transition-colors shrink-0">
+            <Pencil size={14} />
+          </button>
         </div>
       </div>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -111,6 +133,53 @@ export default function Sidebar({ profile }: { profile: Profile }) {
       <aside className="hidden md:flex w-64 bg-[#1a1a2e] text-white flex-col min-h-screen shrink-0">
         <SidebarContent />
       </aside>
+
+      {/* 본인 정보 수정 모달 */}
+      {editProfileOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setEditProfileOpen(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-lg font-bold text-gray-900">내 정보 수정</h2>
+              <button onClick={() => setEditProfileOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              {[
+                { label: '이름', key: 'name' },
+                { label: '전화번호', key: 'phone' },
+                { label: '생일 (YYYY-MM-DD)', key: 'birthday' },
+                { label: '인스타그램', key: 'instagram' },
+                { label: '풀마라톤 PB', key: 'pb_full' },
+                { label: '10K PB', key: 'pb_10k' },
+              ].map(({ label, key }) => (
+                <div key={key}>
+                  <label className="text-sm text-gray-600 mb-1 block">{label}</label>
+                  <input
+                    value={(profileForm as any)[key] ?? ''}
+                    onChange={e => setProfileForm({ ...profileForm, [key]: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#e94560] text-gray-900"
+                  />
+                </div>
+              ))}
+              <div>
+                <label className="text-sm text-gray-600 mb-1 block">자기소개</label>
+                <textarea
+                  value={profileForm.bio ?? ''}
+                  onChange={e => setProfileForm({ ...profileForm, bio: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#e94560] text-gray-900 resize-none"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end p-6 border-t">
+              <button onClick={() => setEditProfileOpen(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">취소</button>
+              <button onClick={handleProfileSave} disabled={profileSaving} className="px-4 py-2 bg-[#e94560] text-white text-sm rounded-lg hover:bg-[#d63651] disabled:opacity-50">
+                {profileSaving ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
