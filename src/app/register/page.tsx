@@ -15,13 +15,33 @@ export default function RegisterPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: { data: { name: form.name, phone: form.phone } },
-    })
-    if (error) { setError(error.message); setLoading(false); return }
-    router.push('/pending')
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: { data: { name: form.name, phone: form.phone } },
+      })
+
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
+
+      // 프로필에 이름/전화번호 업데이트
+      if (data.user) {
+        await supabase.from('profiles').update({
+          name: form.name,
+          phone: form.phone || null,
+        }).eq('id', data.user.id)
+      }
+
+      router.push('/pending')
+    } catch (err: any) {
+      setError(err?.message || '오류가 발생했습니다. 다시 시도해주세요.')
+      setLoading(false)
+    }
   }
 
   return (
