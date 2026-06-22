@@ -37,3 +37,33 @@ export default function MemberActions({ profileId, currentRole, showApprove }: P
           <button onClick={() => updateRole('member')} disabled={loading}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50">
             <CheckCircle size={14} />승인
+          </button>
+          <button onClick={handleReject} disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-600 text-xs font-medium rounded-lg transition-colors disabled:opacity-50">
+            <XCircle size={14} />거절
+          </button>
+        </>
+      )}
+      {!showApprove && (
+        <>
+          {currentRole !== 'admin' && (
+            <button onClick={() => updateRole('admin')} disabled={loading}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50">
+              <Shield size={14} />운영진
+            </button>
+          )}
+          {currentRole !== 'member' && (
+            <button onClick={() => updateRole('member')} disabled={loading}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50">
+              <CheckCircle size={14} />회원
+            </button>
+          )}
+          <button onClick={handleDelete} disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-600 text-xs font-medium rounded-lg transition-colors disabled:opacity-50">
+            <UserMinus size={14} />탈퇴
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
