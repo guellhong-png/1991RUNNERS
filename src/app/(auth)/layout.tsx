@@ -5,9 +5,20 @@ import Sidebar from '@/components/layout/Sidebar'
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  
   if (!user) redirect('/login')
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  if (!profile || profile.role === 'pending') redirect('/pending')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) redirect('/login')
+  
+  // pending이어도 dashboard는 접근 가능하게 (pending 페이지에서 처리)
+  if (profile.role === 'pending') redirect('/pending')
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar profile={profile} />
