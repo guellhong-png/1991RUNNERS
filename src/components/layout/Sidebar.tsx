@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Profile } from '@/types'
-import { Calendar, Megaphone, Wallet, Settings, LogOut, Home, Users, BookOpen, ClipboardList, Archive, ChevronDown, ChevronRight, Newspaper, Star, MessageSquare } from 'lucide-react'
+import { Calendar, Megaphone, Wallet, Settings, LogOut, Home, Users, BookOpen, ClipboardList, Archive, ChevronDown, ChevronRight, Newspaper, Star, MessageSquare, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 
 export default function Sidebar({ profile }: { profile: Profile }) {
@@ -11,6 +11,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
   const router = useRouter()
   const supabase = createClient()
   const [boardOpen, setBoardOpen] = useState(pathname.startsWith('/board'))
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -23,14 +24,14 @@ export default function Sidebar({ profile }: { profile: Profile }) {
   const NavItem = ({ href, icon, label, adminOnly = false }: { href: string; icon: React.ReactNode; label: string; adminOnly?: boolean }) => {
     if (adminOnly && profile.role !== 'admin') return null
     return (
-      <Link href={href} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${isActive(href) ? 'bg-[#e94560] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+      <Link href={href} onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${isActive(href) ? 'bg-[#e94560] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
         {icon}{label}
       </Link>
     )
   }
 
-  return (
-    <aside className="w-64 bg-[#1a1a2e] text-white flex flex-col min-h-screen shrink-0">
+  const SidebarContent = () => (
+    <>
       <div className="p-6 border-b border-white/10">
         <h1 className="text-xl font-bold">🏃 뛰꼬양</h1>
         <p className="text-xs text-gray-400 mt-1">러닝 클럽</p>
@@ -46,14 +47,11 @@ export default function Sidebar({ profile }: { profile: Profile }) {
           </div>
         </div>
       </div>
-
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         <NavItem href="/dashboard" icon={<Home size={18} />} label="홈" />
         <NavItem href="/about" icon={<BookOpen size={18} />} label="뛰꼬양 소개" />
         <NavItem href="/profile" icon={<Users size={18} />} label="회원 프로필" />
         <NavItem href="/calendar" icon={<Calendar size={18} />} label="뛰꼬양 캘린더" />
-
-        {/* 게시판 */}
         <div>
           <button
             onClick={() => setBoardOpen(!boardOpen)}
@@ -64,30 +62,55 @@ export default function Sidebar({ profile }: { profile: Profile }) {
           </button>
           {boardOpen && (
             <div className="ml-6 mt-1 space-y-1">
-              <Link href="/board/news" className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/news') ? 'bg-[#e94560] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+              <Link href="/board/news" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/news') ? 'bg-[#e94560] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
                 <Newspaper size={14} />뛰꼬양 소식
               </Link>
-              <Link href="/board/notice" className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/notice') ? 'bg-[#e94560] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+              <Link href="/board/notice" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/notice') ? 'bg-[#e94560] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
                 <Star size={14} />뛰꼬양 필독사항
               </Link>
-              <Link href="/board/free" className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/free') ? 'bg-[#e94560] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+              <Link href="/board/free" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/free') ? 'bg-[#e94560] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
                 <MessageSquare size={14} />자유게시판
               </Link>
             </div>
           )}
         </div>
-
         <NavItem href="/attendance" icon={<ClipboardList size={18} />} label="뛰꼬양 출석표" />
         <NavItem href="/finance" icon={<Wallet size={18} />} label="회비 내역" />
         <NavItem href="/archive" icon={<Archive size={18} />} label="뛰꼬양 자료실" />
         <NavItem href="/admin" icon={<Settings size={18} />} label="관리자" adminOnly />
       </nav>
-
       <div className="p-4 border-t border-white/10">
         <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:bg-white/10 hover:text-white transition-colors w-full">
           <LogOut size={18} />로그아웃
         </button>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* 모바일 상단 헤더 */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#1a1a2e] text-white flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <h1 className="text-lg font-bold">🏃 뛰꼬양</h1>
+        <button onClick={() => setMobileOpen(!mobileOpen)}>
+          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* 모바일 드로어 */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-40 flex">
+          <div className="w-64 bg-[#1a1a2e] text-white flex flex-col min-h-screen overflow-y-auto mt-12">
+            <SidebarContent />
+          </div>
+          <div className="flex-1 bg-black/50" onClick={() => setMobileOpen(false)} />
+        </div>
+      )}
+
+      {/* PC 사이드바 */}
+      <aside className="hidden md:flex w-64 bg-[#1a1a2e] text-white flex-col min-h-screen shrink-0">
+        <SidebarContent />
+      </aside>
+    </>
   )
 }
