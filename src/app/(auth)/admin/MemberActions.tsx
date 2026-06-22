@@ -37,7 +37,7 @@ export default function MemberActions({ profileId, currentRole, showApprove }: P
       <div className="relative">
         <button onClick={() => setShowMenu(!showMenu)} disabled={loading} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"><ChevronDown size={16} /></button>
         {showMenu && (
-          <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50 min-w-36">
+          <div className="absolute left-0 top-8 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50 min-w-36">
             {currentRole !== 'admin' && <button onClick={() => updateRole('admin')} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 text-left"><Shield size={14} className="text-yellow-500" />운영진으로</button>}
             {currentRole !== 'member' && <button onClick={() => updateRole('member')} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 text-left"><CheckCircle size={14} className="text-green-500" />일반회원으로</button>}
             <button onClick={handleDelete} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-500 hover:bg-red-50 text-left border-t border-gray-100 mt-1"><UserMinus size={14} />탈퇴 처리</button>
