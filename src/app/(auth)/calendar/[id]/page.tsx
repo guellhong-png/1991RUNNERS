@@ -8,11 +8,12 @@ import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/types'
 import AttendanceButtons from './AttendanceButtons'
 import DeleteEventButton from './DeleteEventButton'
 
-export default async function EventDetailPage({ params }: { params: { id: string } }) {
+export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single()
-  const { data: event } = await supabase.from('events').select('*, creator:profiles!created_by(id, name), attendances(id, status, user_id, profile:profiles!user_id(id, name))').eq('id', params.id).single()
+  const { data: event } = await supabase.from('events').select('*, creator:profiles!created_by(id, name), attendances(id, status, user_id, profile:profiles!user_id(id, name))').eq('id', id).single()
   if (!event) notFound()
 
   const attending = event.attendances?.filter((a: any) => a.status === 'attending') ?? []
@@ -30,7 +31,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
       </div>
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
-          <span className={`badge ${EVENT_TYPE_COLORS[event.event_type as keyof typeof EVENT_TYPE_COLORS]}`}>{EVENT_TYPE_LABELS[event.event_type as keyof typeof EVENT_TYPE_LABELS]}</span>
+          <span className={`badge ${EVENT_TYPE_COLORS[event.event_type as keyof typeof EVENT_TYPE_COLORS] || 'bg-gray-100 text-gray-600'}`}>{EVENT_TYPE_LABELS[event.event_type as keyof typeof EVENT_TYPE_LABELS] || event.event_type}</span>
         </div>
         <div className="space-y-3 mb-6">
           <div className="flex items-center gap-3 text-gray-700"><Clock size={18} className="text-gray-400 shrink-0" /><span>{format(new Date(event.event_date), 'yyyy년 M월 d일 (E) HH:mm', { locale: ko })}</span></div>
