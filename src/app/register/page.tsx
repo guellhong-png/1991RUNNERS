@@ -29,7 +29,6 @@ export default function RegisterPage() {
         return
       }
 
-      // 프로필에 이름/전화번호 업데이트
       if (data.user) {
         await supabase.from('profiles').update({
           name: form.name,
