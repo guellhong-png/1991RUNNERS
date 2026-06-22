@@ -43,7 +43,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
   const NavItem = ({ href, icon, label, adminOnly = false }: { href: string; icon: React.ReactNode; label: string; adminOnly?: boolean }) => {
     if (adminOnly && profile.role !== 'admin') return null
     return (
-      <Link href={href} onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${isActive(href) ? 'bg-[#e94560] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+      <Link href={href} onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${isActive(href) ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
         {icon}{label}
       </Link>
     )
@@ -51,13 +51,12 @@ export default function Sidebar({ profile }: { profile: Profile }) {
 
   const SidebarContent = () => (
     <>
-      <div className="p-6 border-b border-white/10">
-        <h1 className="text-xl font-bold">🏃 뛰꼬양</h1>
-        <p className="text-xs text-gray-400 mt-1">러닝 클럽</p>
+      <div className="p-4 border-b border-white/10">
+        <img src="https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.jpeg" alt="1991RUNNERS" className="w-10 h-10 rounded-lg" />
       </div>
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-[#e94560] flex items-center justify-center text-sm font-bold shrink-0">{profile.name[0]}</div>
+          <div className="w-9 h-9 rounded-full bg-[#c0392b] flex items-center justify-center text-sm font-bold shrink-0">{profile.name[0]}</div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium truncate">{profile.name}</p>
             <span className={`text-xs px-1.5 py-0.5 rounded ${profile.role === 'admin' ? 'bg-yellow-400/20 text-yellow-300' : 'bg-white/10 text-gray-400'}`}>
@@ -84,13 +83,13 @@ export default function Sidebar({ profile }: { profile: Profile }) {
           </button>
           {boardOpen && (
             <div className="ml-6 mt-1 space-y-1">
-              <Link href="/board/news" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/news') ? 'bg-[#e94560] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+              <Link href="/board/news" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/news') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
                 <Newspaper size={14} />뛰꼬양 소식
               </Link>
-              <Link href="/board/notice" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/notice') ? 'bg-[#e94560] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+              <Link href="/board/notice" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/notice') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
                 <Star size={14} />뛰꼬양 필독사항
               </Link>
-              <Link href="/board/free" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/free') ? 'bg-[#e94560] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+              <Link href="/board/free" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/free') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
                 <MessageSquare size={14} />자유게시판
               </Link>
             </div>
@@ -112,8 +111,8 @@ export default function Sidebar({ profile }: { profile: Profile }) {
   return (
     <>
       {/* 모바일 상단 헤더 */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#1a1a2e] text-white flex items-center justify-between px-4 py-3 border-b border-white/10">
-        <h1 className="text-lg font-bold">🏃 뛰꼬양</h1>
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-black text-white flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <img src="https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.jpeg" alt="1991RUNNERS" className="w-8 h-8 rounded-lg" />
         <button onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -122,7 +121,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
       {/* 모바일 드로어 */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex">
-          <div className="w-64 bg-[#1a1a2e] text-white flex flex-col min-h-screen overflow-y-auto mt-12">
+          <div className="w-64 bg-black text-white flex flex-col min-h-screen overflow-y-auto mt-12">
             <SidebarContent />
           </div>
           <div className="flex-1 bg-black/50" onClick={() => setMobileOpen(false)} />
@@ -130,7 +129,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
       )}
 
       {/* PC 사이드바 */}
-      <aside className="hidden md:flex w-64 bg-[#1a1a2e] text-white flex-col min-h-screen shrink-0">
+      <aside className="hidden md:flex w-64 bg-black text-white flex-col min-h-screen shrink-0">
         <SidebarContent />
       </aside>
 
@@ -157,7 +156,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
                   <input
                     value={(profileForm as any)[key] ?? ''}
                     onChange={e => setProfileForm({ ...profileForm, [key]: e.target.value })}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#e94560] text-gray-900"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b] text-gray-900"
                   />
                 </div>
               ))}
@@ -166,14 +165,14 @@ export default function Sidebar({ profile }: { profile: Profile }) {
                 <textarea
                   value={profileForm.bio ?? ''}
                   onChange={e => setProfileForm({ ...profileForm, bio: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#e94560] text-gray-900 resize-none"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b] text-gray-900 resize-none"
                   rows={3}
                 />
               </div>
             </div>
             <div className="flex gap-2 justify-end p-6 border-t">
               <button onClick={() => setEditProfileOpen(false)} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">취소</button>
-              <button onClick={handleProfileSave} disabled={profileSaving} className="px-4 py-2 bg-[#e94560] text-white text-sm rounded-lg hover:bg-[#d63651] disabled:opacity-50">
+              <button onClick={handleProfileSave} disabled={profileSaving} className="px-4 py-2 bg-[#c0392b] text-white text-sm rounded-lg hover:bg-[#a93226] disabled:opacity-50">
                 {profileSaving ? '저장 중...' : '저장'}
               </button>
             </div>
