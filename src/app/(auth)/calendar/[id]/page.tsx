@@ -8,11 +8,12 @@ import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/types'
 import AttendanceButtons from './AttendanceButtons'
 import DeleteEventButton from './DeleteEventButton'
 
-export default async function EventDetailPage({ params }: { params: { id: string } }) {
+export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single()
-  const { data: event } = await supabase.from('events').select('*, creator:profiles!created_by(id, name), attendances(id, status, user_id, profile:profiles!user_id(id, name))').eq('id', params.id).single()
+  const { data: event } = await supabase.from('events').select('*, creator:profiles!created_by(id, name), attendances(id, status, user_id, profile:profiles!user_id(id, name))').eq('id', id).single()
   if (!event) notFound()
 
   const attending = event.attendances?.filter((a: any) => a.status === 'attending') ?? []
