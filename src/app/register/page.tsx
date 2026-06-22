@@ -24,7 +24,7 @@ export default function RegisterPage() {
       })
 
       if (error) {
-        setError(error.message)
+        setError(JSON.stringify(error) || error.message || '알 수 없는 오류')
         setLoading(false)
         return
       }
