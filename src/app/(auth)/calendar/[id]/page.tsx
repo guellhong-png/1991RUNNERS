@@ -14,7 +14,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single()
-  const { data: event } = await supabase.from('events').select('*, creator:profiles!created_by(id, name), attendances(id, status, user_id, profile:profiles!user_id(id, name))').eq('id', id).single()
+  const { data: event } = await supabase.from('events').select('*, creator:profiles!created_by(id, name, avatar_url), attendances(id, status, user_id, profile:profiles!user_id(id, name, avatar_url))').eq('id', id).single()
   if (!event) notFound()
 
   const attending = event.attendances?.filter((a: any) => a.status === 'attending') ?? []
@@ -45,7 +45,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
         {event.image_url && (
           <div className="mb-4 rounded-lg overflow-hidden flex justify-center bg-gray-50">
-             <img src={event.image_url} alt={event.title} className="max-h-[500px] object-contain" />
+            <img src={event.image_url} alt={event.title} className="max-h-[500px] object-contain" />
           </div>
         )}
 
@@ -74,9 +74,17 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           </div>
           <div className="flex items-center gap-3 text-gray-700">
             <User size={18} className="text-gray-400 shrink-0" />
-            <span>주최: {event.creator?.name ?? '알 수 없음'}</span>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-[#c0392b] flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                {event.creator?.avatar_url
+                  ? <img src={event.creator.avatar_url} className="w-full h-full object-cover" />
+                  : event.creator?.name?.[0]}
+              </div>
+              <span>주최: {event.creator?.name ?? '알 수 없음'}</span>
+            </div>
           </div>
         </div>
+
         {event.description && (
           <div className="border-t border-gray-100 pt-4">
             <p className="text-gray-600 whitespace-pre-wrap">{event.description}</p>
@@ -89,28 +97,43 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           </div>
         )}
       </div>
+
       <div className="card">
         <h2 className="font-bold text-gray-900 mb-4">출석부</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-3"><span className="w-2 h-2 rounded-full bg-green-400"></span><span className="text-sm font-medium text-gray-700">참여 ({attending.length}명)</span></div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-2 h-2 rounded-full bg-green-400"></span>
+              <span className="text-sm font-medium text-gray-700">참여 ({attending.length}명)</span>
+            </div>
             <div className="space-y-2">
               {attending.length === 0 && <p className="text-xs text-gray-400">아직 없어요</p>}
               {attending.map((a: any) => (
                 <div key={a.id} className="flex items-center gap-2 bg-green-50 rounded-lg px-3 py-2">
-                  <div className="w-6 h-6 rounded-full bg-green-200 flex items-center justify-center text-xs font-medium text-green-700">{a.profile?.name[0]}</div>
+                  <div className="w-6 h-6 rounded-full bg-green-200 flex items-center justify-center text-xs font-medium text-green-700 overflow-hidden">
+                    {a.profile?.avatar_url
+                      ? <img src={a.profile.avatar_url} className="w-full h-full object-cover" />
+                      : a.profile?.name?.[0]}
+                  </div>
                   <span className="text-sm text-gray-700">{a.profile?.name}</span>
                 </div>
               ))}
             </div>
           </div>
           <div>
-            <div className="flex items-center gap-2 mb-3"><span className="w-2 h-2 rounded-full bg-gray-300"></span><span className="text-sm font-medium text-gray-700">불참 ({notAttending.length}명)</span></div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-2 h-2 rounded-full bg-gray-300"></span>
+              <span className="text-sm font-medium text-gray-700">불참 ({notAttending.length}명)</span>
+            </div>
             <div className="space-y-2">
               {notAttending.length === 0 && <p className="text-xs text-gray-400">아직 없어요</p>}
               {notAttending.map((a: any) => (
                 <div key={a.id} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                  <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-500">{a.profile?.name[0]}</div>
+                  <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-500 overflow-hidden">
+                    {a.profile?.avatar_url
+                      ? <img src={a.profile.avatar_url} className="w-full h-full object-cover" />
+                      : a.profile?.name?.[0]}
+                  </div>
                   <span className="text-sm text-gray-500">{a.profile?.name}</span>
                 </div>
               ))}
