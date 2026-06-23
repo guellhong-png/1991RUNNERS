@@ -34,9 +34,32 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           <span className={`badge ${EVENT_TYPE_COLORS[event.event_type as keyof typeof EVENT_TYPE_COLORS] || 'bg-gray-100 text-gray-600'}`}>{EVENT_TYPE_LABELS[event.event_type as keyof typeof EVENT_TYPE_LABELS] || event.event_type}</span>
         </div>
         <div className="space-y-3 mb-6">
-          <div className="flex items-center gap-3 text-gray-700"><Clock size={18} className="text-gray-400 shrink-0" /><span>{format(new Date(event.event_date), 'yyyy년 M월 d일 (E) HH:mm', { locale: ko })}</span></div>
-          <div className="flex items-center gap-3 text-gray-700"><MapPin size={18} className="text-gray-400 shrink-0" /><span>{event.location}</span></div>
-          <div className="flex items-center gap-3 text-gray-700"><User size={18} className="text-gray-400 shrink-0" /><span>주최: {event.creator?.name ?? '알 수 없음'}</span></div>
+          <div className="flex items-center gap-3 text-gray-700">
+            <Clock size={18} className="text-gray-400 shrink-0" />
+            <span>{format(new Date(event.event_date), 'yyyy년 M월 d일 (E) HH:mm', { locale: ko })}</span>
+          </div>
+          <div className="flex items-center gap-3 text-gray-700">
+            <MapPin size={18} className="text-gray-400 shrink-0" />
+            {event.location_url ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span>{event.location}</span>
+                <a href={event.location_url} target="_blank" rel="noopener noreferrer"
+                  className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full hover:bg-yellow-200 transition-colors">
+                  카카오맵
+                </a>
+                <a href={`https://map.naver.com/v5/search/${encodeURIComponent(event.location)}`} target="_blank" rel="noopener noreferrer"
+                  className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors">
+                  네이버지도
+                </a>
+              </div>
+            ) : (
+              <span>{event.location}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-3 text-gray-700">
+            <User size={18} className="text-gray-400 shrink-0" />
+            <span>주최: {event.creator?.name ?? '알 수 없음'}</span>
+          </div>
         </div>
         {event.description && <div className="border-t border-gray-100 pt-4"><p className="text-gray-600 whitespace-pre-wrap">{event.description}</p></div>}
         {!isPast && (
