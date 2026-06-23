@@ -23,7 +23,12 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  if (pathname.startsWith('/login') || pathname.startsWith('/register') || pathname === '/pending') {
+  if (
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register') ||
+    pathname === '/pending' ||
+    pathname.startsWith('/auth')
+  ) {
     return supabaseResponse
   }
 
