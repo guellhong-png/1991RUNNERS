@@ -38,6 +38,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         <h1 className="text-2xl font-bold text-gray-900 flex-1">{event.title}</h1>
         {canDelete && <DeleteEventButton eventId={event.id} />}
       </div>
+
+      {/* 모임 기본 정보 */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <span className={`badge ${EVENT_TYPE_COLORS[event.event_type as keyof typeof EVENT_TYPE_COLORS] || 'bg-gray-100 text-gray-600'}`}>
@@ -93,6 +95,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
+        {/* 상세 내용 */}
+        {event.description && (
+          <div className="border-t border-gray-100 pt-4">
+            <p className="text-gray-600 whitespace-pre-wrap">{event.description}</p>
+          </div>
+        )}
+
+        {/* 참여 여부 */}
         {!isPast && (
           <div className="border-t border-gray-100 pt-4 mt-4">
             <p className="text-sm font-medium text-gray-700 mb-3">참여 여부를 알려주세요</p>
@@ -101,8 +111,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         )}
       </div>
 
+      {/* 출석 현황 */}
       <div className="card">
-        <h2 className="font-bold text-gray-900 mb-4">출석부</h2>
+        <h2 className="font-bold text-gray-900 mb-4">출석 현황</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -145,6 +156,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
 
+      {/* 모임 설명 수정 + 댓글 */}
       <EventActions
         event={event}
         currentUserId={user!.id}
