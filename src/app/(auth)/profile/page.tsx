@@ -42,7 +42,7 @@ export default async function ProfilePage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">이름</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-28">이름</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">등급</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">가입일</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">생일</th>
