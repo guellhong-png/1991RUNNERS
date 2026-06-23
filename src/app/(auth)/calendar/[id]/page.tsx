@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/types'
 import AttendanceButtons from './AttendanceButtons'
 import DeleteEventButton from './DeleteEventButton'
+import KakaoShareButton from './KakaoShareButton'
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -30,9 +31,25 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         {canDelete && <DeleteEventButton eventId={event.id} />}
       </div>
       <div className="card">
-        <div className="flex items-center gap-2 mb-4">
-          <span className={`badge ${EVENT_TYPE_COLORS[event.event_type as keyof typeof EVENT_TYPE_COLORS] || 'bg-gray-100 text-gray-600'}`}>{EVENT_TYPE_LABELS[event.event_type as keyof typeof EVENT_TYPE_LABELS] || event.event_type}</span>
+        <div className="flex items-center justify-between mb-4">
+          <span className={`badge ${EVENT_TYPE_COLORS[event.event_type as keyof typeof EVENT_TYPE_COLORS] || 'bg-gray-100 text-gray-600'}`}>
+            {EVENT_TYPE_LABELS[event.event_type as keyof typeof EVENT_TYPE_LABELS] || event.event_type}
+          </span>
+          <KakaoShareButton
+            title={event.title}
+            description={`${format(new Date(event.event_date), 'M월 d일 (E) HH:mm', { locale: ko })} · ${event.location}`}
+            imageUrl={event.image_url}
+            eventId={id}
+          />
         </div>
+
+        {/* 이미지 */}
+        {event.image_url && (
+          <div className="mb-4 rounded-lg overflow-hidden">
+            <img src={event.image_url} alt={event.title} className="w-full object-cover max-h-64" />
+          </div>
+        )}
+
         <div className="space-y-3 mb-6">
           <div className="flex items-center gap-3 text-gray-700">
             <Clock size={18} className="text-gray-400 shrink-0" />
@@ -61,7 +78,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             <span>주최: {event.creator?.name ?? '알 수 없음'}</span>
           </div>
         </div>
-        {event.description && <div className="border-t border-gray-100 pt-4"><p className="text-gray-600 whitespace-pre-wrap">{event.description}</p></div>}
+        {event.description && (
+          <div className="border-t border-gray-100 pt-4">
+            <p className="text-gray-600 whitespace-pre-wrap">{event.description}</p>
+          </div>
+        )}
         {!isPast && (
           <div className="border-t border-gray-100 pt-4 mt-4">
             <p className="text-sm font-medium text-gray-700 mb-3">참여 여부를 알려주세요</p>
