@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Profile } from '@/types'
-import { Calendar, Megaphone, Wallet, Settings, LogOut, Home, Users, BookOpen, ClipboardList, Archive, ChevronDown, ChevronRight, Newspaper, Star, MessageSquare, Menu, X, Pencil } from 'lucide-react'
-import { useState } from 'react'
+import { Calendar, Megaphone, Wallet, Settings, LogOut, Home, Users, BookOpen, ClipboardList, Archive, ChevronDown, ChevronRight, Newspaper, Star, MessageSquare, Menu, X, Pencil, Camera } from 'lucide-react'
+import { useState, useRef } from 'react'
 
 export default function Sidebar({ profile }: { profile: Profile }) {
   const pathname = usePathname()
@@ -14,6 +14,9 @@ export default function Sidebar({ profile }: { profile: Profile }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState((profile as any).avatar_url ?? null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const avatarFileRef = useRef<HTMLInputElement>(null)
   const [profileForm, setProfileForm] = useState({
     name: profile.name ?? '',
     phone: (profile as any).phone ?? '',
@@ -28,6 +31,21 @@ export default function Sidebar({ profile }: { profile: Profile }) {
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
+  }
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarUploading(true)
+    const ext = file.name.split('.').pop()
+    const path = `${profile.id}/avatar_${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('avatars').upload(path, file)
+    if (!error) {
+      const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+      await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', profile.id)
+      setAvatarUrl(data.publicUrl)
+    }
+    setAvatarUploading(false)
   }
 
   const handleProfileSave = async () => {
@@ -56,7 +74,23 @@ export default function Sidebar({ profile }: { profile: Profile }) {
       </div>
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-[#c0392b] flex items-center justify-center text-sm font-bold shrink-0">{profile.name[0]}</div>
+          <div className="relative shrink-0">
+            <div className="w-9 h-9 rounded-full bg-[#c0392b] flex items-center justify-center text-sm font-bold overflow-hidden">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
+              ) : (
+                <span>{profile.name[0]}</span>
+              )}
+            </div>
+            <button
+              onClick={() => avatarFileRef.current?.click()}
+              disabled={avatarUploading}
+              className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow-sm hover:bg-gray-100"
+            >
+              <Camera size={9} className="text-gray-600" />
+            </button>
+            <input ref={avatarFileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+          </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium truncate">{profile.name}</p>
             <span className={`text-xs px-1.5 py-0.5 rounded ${profile.role === 'admin' ? 'bg-yellow-400/20 text-yellow-300' : 'bg-white/10 text-gray-400'}`}>
@@ -110,7 +144,6 @@ export default function Sidebar({ profile }: { profile: Profile }) {
 
   return (
     <>
-      {/* 모바일 상단 헤더 */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-black text-white flex items-center justify-between px-4 py-3 border-b border-white/10">
         <img src="https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.png" alt="1991RUNNERS" className="w-8 h-8 object-contain" />
         <button onClick={() => setMobileOpen(!mobileOpen)}>
@@ -118,7 +151,6 @@ export default function Sidebar({ profile }: { profile: Profile }) {
         </button>
       </div>
 
-      {/* 모바일 드로어 */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex">
           <div className="w-64 bg-black text-white flex flex-col min-h-screen overflow-y-auto mt-12">
@@ -128,12 +160,10 @@ export default function Sidebar({ profile }: { profile: Profile }) {
         </div>
       )}
 
-      {/* PC 사이드바 */}
       <aside className="hidden md:flex w-64 bg-black text-white flex-col min-h-screen shrink-0">
         <SidebarContent />
       </aside>
 
-      {/* 본인 정보 수정 모달 */}
       {editProfileOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setEditProfileOpen(false)} />
