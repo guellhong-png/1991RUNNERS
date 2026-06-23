@@ -24,7 +24,6 @@ export default function Sidebar({ profile }: { profile: Profile }) {
     instagram: (profile as any).instagram ?? '',
     pb_full: (profile as any).pb_full ?? '',
     pb_10k: (profile as any).pb_10k ?? '',
-    bio: (profile as any).bio ?? '',
   })
 
   const handleLogout = async () => {
@@ -177,7 +176,6 @@ export default function Sidebar({ profile }: { profile: Profile }) {
                 { label: '이름', key: 'name' },
                 { label: '전화번호', key: 'phone' },
                 { label: '생일 (YYYY-MM-DD)', key: 'birthday' },
-                { label: '인스타그램', key: 'instagram' },
                 { label: '풀마라톤 PB', key: 'pb_full' },
                 { label: '10K PB', key: 'pb_10k' },
               ].map(({ label, key }) => (
@@ -191,13 +189,16 @@ export default function Sidebar({ profile }: { profile: Profile }) {
                 </div>
               ))}
               <div>
-                <label className="text-sm text-gray-600 mb-1 block">자기소개</label>
-                <textarea
-                  value={profileForm.bio ?? ''}
-                  onChange={e => setProfileForm({ ...profileForm, bio: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b] text-gray-900 resize-none"
-                  rows={3}
-                />
+                <label className="text-sm text-gray-600 mb-1 block">인스타그램 (@제외 후 아이디만 입력)</label>
+                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:border-[#c0392b]">
+                  <span className="px-3 py-2 text-sm text-gray-400 bg-gray-50 border-r border-gray-200">@</span>
+                  <input
+                    value={profileForm.instagram ?? ''}
+                    onChange={e => setProfileForm({ ...profileForm, instagram: e.target.value.replace('@', '') })}
+                    placeholder="아이디"
+                    className="flex-1 px-3 py-2 text-sm focus:outline-none text-gray-900"
+                  />
+                </div>
               </div>
             </div>
             <div className="flex gap-2 justify-end p-6 border-t">
