@@ -139,7 +139,7 @@ export default function MemberActions({ profileId, currentRole, showApprove, pro
                   등급 변경 <ChevronDown size={12} />
                 </button>
                 {gradeOpen && (
-                  <div className="absolute top-8 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-28 overflow-hidden">
+                  <div className="absolute bottom-8 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-28 overflow-hidden">
                     <button
                       onClick={() => handleGradeChange('운영진', 'admin')}
                       className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-yellow-700 font-medium"
