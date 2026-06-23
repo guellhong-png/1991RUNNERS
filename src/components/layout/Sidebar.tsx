@@ -39,7 +39,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
     setAvatarUploading(true)
     const ext = file.name.split('.').pop()
     const path = `${profile.id}/avatar_${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from('avatars').upload(path, file)
+    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
     if (!error) {
       const { data } = supabase.storage.from('avatars').getPublicUrl(path)
       await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', profile.id)
