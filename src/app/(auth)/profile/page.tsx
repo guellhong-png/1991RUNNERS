@@ -54,8 +54,8 @@ export default async function ProfilePage() {
             <tbody className="divide-y divide-gray-50">
               {profiles?.map((p) => (
                 <tr key={p.id} className={`hover:bg-gray-50 transition-colors ${p.id === user?.id ? 'bg-blue-50/50' : ''}`}>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                 <td className="px-4 py-3 min-w-28">
+                    <div className="flex items-center gap-2 whitespace-nowrap">
                       <div className="w-7 h-7 rounded-full bg-[#e94560] flex items-center justify-center text-xs font-bold text-white shrink-0 overflow-hidden">
                         {(p as any).avatar_url
                           ? <img src={(p as any).avatar_url} className="w-full h-full object-cover" alt={p.name} />
