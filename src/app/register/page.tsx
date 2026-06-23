@@ -28,6 +28,7 @@ export default function RegisterPage() {
         await supabase.from('profiles').update({
           name: form.name,
           phone: form.phone || null,
+          grade: '준회원',
         }).eq('id', data.user.id)
       }
       router.push('/pending')
