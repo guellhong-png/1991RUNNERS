@@ -42,19 +42,19 @@ export default async function ProfilePage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-28">이름</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">등급</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">가입일</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">생일</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">PB (풀)</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">PB (10K)</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">인스타</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-32">이름</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-16">등급</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-24">가입일</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-16">생일</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-20">PB (풀)</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-20">PB (10K)</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-24">인스타</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {profiles?.map((p) => (
                 <tr key={p.id} className={`hover:bg-gray-50 transition-colors ${p.id === user?.id ? 'bg-blue-50/50' : ''}`}>
-                 <td className="px-4 py-3 min-w-28">
+                  <td className="px-4 py-3 min-w-32">
                     <div className="flex items-center gap-2 whitespace-nowrap">
                       <div className="w-7 h-7 rounded-full bg-[#e94560] flex items-center justify-center text-xs font-bold text-white shrink-0 overflow-hidden">
                         {(p as any).avatar_url
@@ -66,18 +66,18 @@ export default async function ProfilePage() {
                     </div>
                   </td>
                   <td className="px-4 py-3"><GradeBadge grade={p.grade} role={p.role} /></td>
-                  <td className="px-4 py-3 text-gray-500">
+                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                     {p.joined_at ? format(new Date(p.joined_at), 'yyyy.MM.dd', { locale: ko }) : '-'}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">
+                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                     {p.birthday ? format(new Date(p.birthday), 'MM/dd') : '-'}
                   </td>
-                  <td className="px-4 py-3 text-gray-700 font-medium">{p.pb_full || '-'}</td>
-                  <td className="px-4 py-3 text-gray-700 font-medium">{p.pb_10k || '-'}</td>
+                  <td className="px-4 py-3 text-gray-700 font-medium whitespace-nowrap">{p.pb_full || '-'}</td>
+                  <td className="px-4 py-3 text-gray-700 font-medium whitespace-nowrap">{p.pb_10k || '-'}</td>
                   <td className="px-4 py-3">
                     {p.instagram ? (
                       <a href={`https://instagram.com/${p.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
-                         className="flex items-center gap-1 text-pink-500 hover:text-pink-600">
+                         className="flex items-center gap-1 text-pink-500 hover:text-pink-600 whitespace-nowrap">
                         <AtSign size={14} />
                         <span className="text-xs">{p.instagram}</span>
                       </a>
