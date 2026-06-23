@@ -104,7 +104,7 @@ export default function AboutClient({ isAdmin, initialDescription, initialBanner
             </div>
           </div>
         ) : (
-          <p className="text-gray-600 leading-relaxed">{description}</p>
+          <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{description}</p>
         )}
       </div>
 
