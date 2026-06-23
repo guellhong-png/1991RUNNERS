@@ -80,7 +80,6 @@ export default function NewEventPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    // 1MB 이상이면 경고
     if (file.size > 1024 * 1024) {
       alert('이미지는 1MB 이하로 업로드해주세요.')
       return
@@ -202,8 +201,8 @@ export default function NewEventPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">사진 (1MB 이하)</label>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
             {imagePreview ? (
-              <div className="relative">
-                <img src={imagePreview} alt="미리보기" className="w-full rounded-lg object-cover max-h-48" />
+              <div className="relative flex justify-center bg-gray-50 rounded-lg overflow-hidden">
+                <img src={imagePreview} alt="미리보기" className="max-w-full max-h-[500px] object-contain" />
                 <button type="button" onClick={() => { setImageFile(null); setImagePreview(null) }}
                   className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors">
                   <X size={14} />
