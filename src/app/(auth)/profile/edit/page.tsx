@@ -10,7 +10,7 @@ export default function EditProfilePage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
-    name: '', phone: '', birthday: '', pb_full: '', pb_10k: '', instagram: '', bio: ''
+    name: '', phone: '', birthday: '', pb_full: '', pb_10k: '', instagram: ''
   })
 
   useEffect(() => {
@@ -25,7 +25,6 @@ export default function EditProfilePage() {
         pb_full: data.pb_full || '',
         pb_10k: data.pb_10k || '',
         instagram: data.instagram || '',
-        bio: data.bio || '',
       })
     }
     load()
@@ -42,7 +41,6 @@ export default function EditProfilePage() {
       pb_full: form.pb_full || null,
       pb_10k: form.pb_10k || null,
       instagram: form.instagram || null,
-      bio: form.bio || null,
     }).eq('id', user!.id)
     router.push('/profile')
     router.refresh()
@@ -82,12 +80,16 @@ export default function EditProfilePage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">인스타그램 아이디</label>
-            <input value={form.instagram} onChange={(e) => setForm({...form, instagram: e.target.value})} className="input" placeholder="@아이디" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">한줄 소개</label>
-            <textarea value={form.bio} onChange={(e) => setForm({...form, bio: e.target.value})} className="input h-20 resize-none" placeholder="자신을 소개해주세요" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">인스타그램 (@제외 후 아이디만 입력)</label>
+            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:border-[#c0392b]">
+              <span className="px-3 py-2 text-sm text-gray-400 bg-gray-50 border-r border-gray-200">@</span>
+              <input
+                value={form.instagram}
+                onChange={(e) => setForm({...form, instagram: e.target.value.replace('@', '')})}
+                placeholder="아이디"
+                className="flex-1 px-3 py-2 text-sm focus:outline-none text-gray-900"
+              />
+            </div>
           </div>
           <p className="text-xs text-gray-400">* 등급은 운영진만 변경할 수 있습니다</p>
           <div className="flex gap-3 pt-2">
