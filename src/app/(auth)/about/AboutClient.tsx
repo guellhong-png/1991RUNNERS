@@ -29,12 +29,11 @@ export default function AboutClient({ isAdmin, initialDescription, initialBanner
     if (!file) return
     setUploading(true)
     const ext = file.name.split('.').pop()
-    const path = `banner.${ext}`
-    await supabase.storage.from('club-images').remove([path])
-    const { error } = await supabase.storage.from('club-images').upload(path, file, { upsert: true })
+    const path = `banner_${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('club-images').upload(path, file)
     if (!error) {
       const { data } = supabase.storage.from('club-images').getPublicUrl(path)
-      const url = `${data.publicUrl}?t=${Date.now()}`
+      const url = data.publicUrl
       await supabase.from('club_info').update({ banner_url: url }).eq('id', 1)
       setBannerUrl(url)
     }
