@@ -17,7 +17,7 @@ declare global {
 export default function KakaoShareButton({ title, description, imageUrl, eventId }: Props) {
   useEffect(() => {
     if (window.Kakao && !window.Kakao.isInitialized()) {
-      window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_MAP_KEY)
+      window.Kakao.init('a0158adb0822ae2bd038e0321530c574')
     }
   }, [])
 
