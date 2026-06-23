@@ -46,7 +46,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         {/* 이미지 */}
         {event.image_url && (
           <div className="mb-4 rounded-lg overflow-hidden">
-            <img src={event.image_url} alt={event.title} className="w-full object-cover max-h-64" />
+            <img src={event.image_url} alt={event.title} className="w-full object-contain max-h-[500px]" />
           </div>
         )}
 
