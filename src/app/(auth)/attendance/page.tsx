@@ -14,25 +14,22 @@ const TYPE_KEYS = ['run', 'ddayrun', 'event', 'race', 'social']
 
 export default async function AttendancePage() {
   const supabase = await createClient()
-  const { data: profiles } = await supabase.from('profiles').select('id, name, role, grade')
+  const { data: profiles } = await supabase.from('profiles').select('id, name, role, grade, avatar_url')
     .in('role', ['member', 'admin']).order('name')
   const { data: events } = await supabase.from('events').select('id, title, event_date, event_type')
     .order('event_date', { ascending: false }).limit(20)
   const { data: attendances } = await supabase.from('attendances').select('event_id, user_id, status')
     .eq('status', 'attending')
 
-  // 유저별 참여한 event_id set
   const attendanceMap = new Map<string, Set<string>>()
   attendances?.forEach(a => {
     if (!attendanceMap.has(a.user_id)) attendanceMap.set(a.user_id, new Set())
     attendanceMap.get(a.user_id)!.add(a.event_id)
   })
 
-  // event_id -> event_type 맵
   const eventTypeMap = new Map<string, string>()
   events?.forEach(e => eventTypeMap.set(e.id, e.event_type))
 
-  // 유저별 타입별 카운트
   const getTypeCount = (userId: string, type: string) => {
     const attended = attendanceMap.get(userId)
     if (!attended) return 0
@@ -40,8 +37,15 @@ export default async function AttendancePage() {
   }
   const getCount = (userId: string) => attendanceMap.get(userId)?.size ?? 0
 
-  // 총합 기준 내림차순 정렬
   const sortedProfiles = [...(profiles ?? [])].sort((a, b) => getCount(b.id) - getCount(a.id))
+
+  const Avatar = ({ profile }: { profile: any }) => (
+    <div className="w-6 h-6 rounded-full bg-[#c0392b] flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden">
+      {profile.avatar_url
+        ? <img src={profile.avatar_url} className="w-full h-full object-cover" alt={profile.name} />
+        : profile.name[0]}
+    </div>
+  )
 
   return (
     <div className="space-y-8">
@@ -50,7 +54,6 @@ export default async function AttendancePage() {
         <p className="text-gray-500 mt-1">모임 참여 현황을 확인하세요</p>
       </div>
 
-      {/* 출석부 현황 */}
       <div>
         <h2 className="text-lg font-bold text-gray-900 mb-4">출석부 현황</h2>
         <div className="card p-0 overflow-hidden">
@@ -74,7 +77,7 @@ export default async function AttendancePage() {
                   <tr key={profile.id} className="hover:bg-gray-50">
                     <td className="sticky left-0 bg-white hover:bg-gray-50 px-4 py-3 font-medium text-gray-900 z-10">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-[#c0392b] flex items-center justify-center text-white text-xs font-bold shrink-0">{profile.name[0]}</div>
+                        <Avatar profile={profile} />
                         {profile.name}
                       </div>
                     </td>
@@ -92,7 +95,6 @@ export default async function AttendancePage() {
         </div>
       </div>
 
-      {/* 내가 참여한 모임들 */}
       <div>
         <h2 className="text-lg font-bold text-gray-900 mb-4">내가 참여한 모임들</h2>
         <div className="card p-0 overflow-hidden">
@@ -118,7 +120,7 @@ export default async function AttendancePage() {
                   <tr key={profile.id} className="hover:bg-gray-50">
                     <td className="sticky left-0 bg-white hover:bg-gray-50 px-4 py-3 font-medium text-gray-900 z-10">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-[#c0392b] flex items-center justify-center text-white text-xs font-bold shrink-0">{profile.name[0]}</div>
+                        <Avatar profile={profile} />
                         {profile.name}
                       </div>
                     </td>
