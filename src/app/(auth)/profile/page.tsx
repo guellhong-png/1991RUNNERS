@@ -56,8 +56,10 @@ export default async function ProfilePage() {
                 <tr key={p.id} className={`hover:bg-gray-50 transition-colors ${p.id === user?.id ? 'bg-blue-50/50' : ''}`}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-[#e94560] flex items-center justify-center text-xs font-bold text-white shrink-0">
-                        {p.name[0]}
+                      <div className="w-7 h-7 rounded-full bg-[#e94560] flex items-center justify-center text-xs font-bold text-white shrink-0 overflow-hidden">
+                        {(p as any).avatar_url
+                          ? <img src={(p as any).avatar_url} className="w-full h-full object-cover" alt={p.name} />
+                          : p.name[0]}
                       </div>
                       <span className="font-medium text-gray-900">{p.name}</span>
                       {p.id === user?.id && <span className="text-xs text-blue-500">(나)</span>}
