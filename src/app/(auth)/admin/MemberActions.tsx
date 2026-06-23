@@ -65,8 +65,6 @@ export default function MemberActions({ profileId, currentRole, showApprove, pro
     setLoading(false)
   }
 
-  const gradeLabel = currentRole === 'admin' ? '운영진' : (profile?.grade || '준회원')
-
   return (
     <div className="w-full">
       {editing ? (
@@ -128,8 +126,6 @@ export default function MemberActions({ profileId, currentRole, showApprove, pro
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-colors">
                 <Pencil size={14} />수정
               </button>
-
-              {/* 등급 변경 드롭다운 */}
               <div className="relative">
                 <button
                   onClick={() => setGradeOpen(!gradeOpen)}
@@ -140,28 +136,12 @@ export default function MemberActions({ profileId, currentRole, showApprove, pro
                 </button>
                 {gradeOpen && (
                   <div className="absolute bottom-8 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-28 overflow-hidden">
-                    <button
-                      onClick={() => handleGradeChange('운영진', 'admin')}
-                      className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-yellow-700 font-medium"
-                    >
-                      운영진
-                    </button>
-                    <button
-                      onClick={() => handleGradeChange('정회원', 'member')}
-                      className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-green-700 font-medium"
-                    >
-                      정회원
-                    </button>
-                    <button
-                      onClick={() => handleGradeChange('준회원', 'member')}
-                      className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-600 font-medium"
-                    >
-                      준회원
-                    </button>
+                    <button onClick={() => handleGradeChange('운영진', 'admin')} className="w-full text-left px-3 py-1 text-xs hover:bg-gray-50 text-yellow-700 font-medium">운영진</button>
+                    <button onClick={() => handleGradeChange('정회원', 'member')} className="w-full text-left px-3 py-1 text-xs hover:bg-gray-50 text-green-700 font-medium">정회원</button>
+                    <button onClick={() => handleGradeChange('준회원', 'member')} className="w-full text-left px-3 py-1 text-xs hover:bg-gray-50 text-gray-600 font-medium">준회원</button>
                   </div>
                 )}
               </div>
-
               <button onClick={handleDelete} disabled={loading}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-600 text-xs font-medium rounded-lg transition-colors disabled:opacity-50">
                 <XCircle size={14} />탈퇴
