@@ -8,6 +8,7 @@ import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/types'
 import AttendanceButtons from './AttendanceButtons'
 import DeleteEventButton from './DeleteEventButton'
 import KakaoShareButton from './KakaoShareButton'
+import EventActions from './EventActions'
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -17,10 +18,17 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const { data: event } = await supabase.from('events').select('*, creator:profiles!created_by(id, name, avatar_url), attendances(id, status, user_id, profile:profiles!user_id(id, name, avatar_url))').eq('id', id).single()
   if (!event) notFound()
 
+  const { data: eventComments } = await supabase
+    .from('event_comments')
+    .select('*, author:profiles!author_id(id, name, avatar_url)')
+    .eq('event_id', id)
+    .order('created_at', { ascending: true })
+
   const attending = event.attendances?.filter((a: any) => a.status === 'attending') ?? []
   const notAttending = event.attendances?.filter((a: any) => a.status === 'not_attending') ?? []
   const myAttendance = event.attendances?.find((a: any) => a.user_id === user?.id)
   const canDelete = profile?.role === 'admin' || event.created_by === user?.id
+  const canEdit = profile?.role === 'admin' || event.created_by === user?.id
   const isPast = new Date(event.event_date) < new Date()
 
   return (
@@ -85,11 +93,6 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
-        {event.description && (
-          <div className="border-t border-gray-100 pt-4">
-            <p className="text-gray-600 whitespace-pre-wrap">{event.description}</p>
-          </div>
-        )}
         {!isPast && (
           <div className="border-t border-gray-100 pt-4 mt-4">
             <p className="text-sm font-medium text-gray-700 mb-3">참여 여부를 알려주세요</p>
@@ -141,6 +144,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           </div>
         </div>
       </div>
+
+      <EventActions
+        event={event}
+        currentUserId={user!.id}
+        currentUserRole={profile?.role ?? 'member'}
+        initialComments={eventComments ?? []}
+        canEdit={canEdit}
+      />
     </div>
   )
 }
