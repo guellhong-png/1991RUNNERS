@@ -2,13 +2,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { CheckCircle, Shield, UserMinus, XCircle, Pencil, X, Check } from 'lucide-react'
+import { XCircle, Pencil, X, Check, ChevronDown } from 'lucide-react'
 
 interface Props { profileId: string; currentRole: string; showApprove?: boolean; profile?: any }
 
 export default function MemberActions({ profileId, currentRole, showApprove, profile }: Props) {
   const [loading, setLoading] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [gradeOpen, setGradeOpen] = useState(false)
   const [form, setForm] = useState({
     name: profile?.name ?? '',
     email: profile?.email ?? '',
@@ -22,15 +23,6 @@ export default function MemberActions({ profileId, currentRole, showApprove, pro
   })
   const router = useRouter()
   const supabase = createClient()
-
-  const updateRole = async (role: string) => {
-    setLoading(true)
-    const updates: any = { role }
-    if (role === 'member' && currentRole === 'pending') updates.joined_at = new Date().toISOString()
-    await supabase.from('profiles').update(updates).eq('id', profileId)
-    router.refresh()
-    setLoading(false)
-  }
 
   const handleReject = async () => {
     if (!confirm('가입 신청을 거절하겠습니까?')) return
@@ -48,6 +40,23 @@ export default function MemberActions({ profileId, currentRole, showApprove, pro
     setLoading(false)
   }
 
+  const handleApprove = async () => {
+    setLoading(true)
+    await supabase.from('profiles').update({ role: 'member', grade: '준회원', joined_at: new Date().toISOString() }).eq('id', profileId)
+    router.refresh()
+    setLoading(false)
+  }
+
+  const handleGradeChange = async (newGrade: string, newRole?: string) => {
+    setLoading(true)
+    setGradeOpen(false)
+    const updates: any = { grade: newGrade }
+    if (newRole) updates.role = newRole
+    await supabase.from('profiles').update(updates).eq('id', profileId)
+    router.refresh()
+    setLoading(false)
+  }
+
   const handleSave = async () => {
     setLoading(true)
     await supabase.from('profiles').update(form).eq('id', profileId)
@@ -55,6 +64,8 @@ export default function MemberActions({ profileId, currentRole, showApprove, pro
     router.refresh()
     setLoading(false)
   }
+
+  const gradeLabel = currentRole === 'admin' ? '운영진' : (profile?.grade || '준회원')
 
   return (
     <div className="w-full">
@@ -69,14 +80,13 @@ export default function MemberActions({ profileId, currentRole, showApprove, pro
               { label: '인스타그램', key: 'instagram' },
               { label: '풀마라톤 PB', key: 'pb_full' },
               { label: '10K PB', key: 'pb_10k' },
-              { label: '등급', key: 'grade' },
             ].map(({ label, key }) => (
               <div key={key}>
                 <label className="text-xs text-gray-500 mb-1 block">{label}</label>
                 <input
                   value={(form as any)[key]}
                   onChange={e => setForm({ ...form, [key]: e.target.value })}
-                  className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-[#e94560]"
+                  className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-[#c0392b]"
                 />
               </div>
             ))}
@@ -86,7 +96,7 @@ export default function MemberActions({ profileId, currentRole, showApprove, pro
             <textarea
               value={form.bio}
               onChange={e => setForm({ ...form, bio: e.target.value })}
-              className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-[#e94560] resize-none"
+              className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-[#c0392b] resize-none"
               rows={2}
             />
           </div>
@@ -94,46 +104,67 @@ export default function MemberActions({ profileId, currentRole, showApprove, pro
             <button onClick={() => setEditing(false)} className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700">
               <X size={14} />취소
             </button>
-            <button onClick={handleSave} disabled={loading} className="flex items-center gap-1 px-3 py-1.5 bg-[#e94560] text-white text-sm rounded-lg hover:bg-[#d63651] disabled:opacity-50">
+            <button onClick={handleSave} disabled={loading} className="flex items-center gap-1 px-3 py-1.5 bg-[#c0392b] text-white text-sm rounded-lg hover:bg-[#a93226] disabled:opacity-50">
               <Check size={14} />저장
             </button>
           </div>
         </div>
       ) : (
         <div className="flex items-center gap-2 flex-wrap">
-          {showApprove && (
+          {showApprove ? (
             <>
-              <button onClick={() => updateRole('member')} disabled={loading}
+              <button onClick={handleApprove} disabled={loading}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50">
-                <CheckCircle size={14} />승인
+                <Check size={14} />승인
               </button>
               <button onClick={handleReject} disabled={loading}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-600 text-xs font-medium rounded-lg transition-colors disabled:opacity-50">
                 <XCircle size={14} />거절
               </button>
             </>
-          )}
-          {!showApprove && (
+          ) : (
             <>
               <button onClick={() => setEditing(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-colors">
                 <Pencil size={14} />수정
               </button>
-              {currentRole !== 'admin' && (
-                <button onClick={() => updateRole('admin')} disabled={loading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50">
-                  <Shield size={14} />운영진
+
+              {/* 등급 변경 드롭다운 */}
+              <div className="relative">
+                <button
+                  onClick={() => setGradeOpen(!gradeOpen)}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                >
+                  등급 변경 <ChevronDown size={12} />
                 </button>
-              )}
-              {currentRole !== 'member' && (
-                <button onClick={() => updateRole('member')} disabled={loading}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50">
-                  <CheckCircle size={14} />회원
-                </button>
-              )}
+                {gradeOpen && (
+                  <div className="absolute top-8 left-0 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-28 overflow-hidden">
+                    <button
+                      onClick={() => handleGradeChange('운영진', 'admin')}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-yellow-700 font-medium"
+                    >
+                      운영진
+                    </button>
+                    <button
+                      onClick={() => handleGradeChange('정회원', 'member')}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-green-700 font-medium"
+                    >
+                      정회원
+                    </button>
+                    <button
+                      onClick={() => handleGradeChange('준회원', 'member')}
+                      className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 text-gray-600 font-medium"
+                    >
+                      준회원
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <button onClick={handleDelete} disabled={loading}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-600 text-xs font-medium rounded-lg transition-colors disabled:opacity-50">
-                <UserMinus size={14} />탈퇴
+                <XCircle size={14} />탈퇴
               </button>
             </>
           )}
