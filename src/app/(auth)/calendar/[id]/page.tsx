@@ -45,7 +45,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
         {event.image_url && (
           <div className="mb-4 rounded-lg overflow-hidden flex justify-center bg-gray-50">
-            <img src={event.image_url} alt={event.title} className="max-w-full max-h-[500px] object-contain" />
+             <img src={event.image_url} alt={event.title} className="max-h-[500px] object-contain" />
           </div>
         )}
 
