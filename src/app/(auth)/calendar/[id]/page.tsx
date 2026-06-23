@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { notFound } from 'next/navigation'
-import { MapPin, Clock, User, ArrowLeft } from 'lucide-react'
+import { MapPin, Clock, User, ArrowLeft, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/types'
 import AttendanceButtons from './AttendanceButtons'
@@ -36,6 +36,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       <div className="flex items-center gap-3">
         <Link href="/calendar" className="text-gray-400 hover:text-gray-600"><ArrowLeft size={20} /></Link>
         <h1 className="text-2xl font-bold text-gray-900 flex-1">{event.title}</h1>
+        {canEdit && (
+          <Link href={`/calendar/${id}/edit`} className="text-gray-400 hover:text-gray-600">
+            <Pencil size={18} />
+          </Link>
+        )}
         {canDelete && <DeleteEventButton eventId={event.id} />}
       </div>
 
@@ -156,7 +161,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
 
-      {/* 모임 설명 수정 + 댓글 */}
+      {/* 댓글 */}
       <EventActions
         event={event}
         currentUserId={user!.id}
