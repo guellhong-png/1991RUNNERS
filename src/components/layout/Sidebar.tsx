@@ -52,7 +52,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
   const SidebarContent = () => (
     <>
       <div className="p-4 border-b border-white/10">
-        <img src="https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.jpeg" alt="1991RUNNERS" className="w-10 h-10 rounded-lg" />
+        <img src="https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.png" alt="1991RUNNERS" className="w-20 h-20 object-contain" />
       </div>
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
@@ -112,7 +112,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
     <>
       {/* 모바일 상단 헤더 */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-black text-white flex items-center justify-between px-4 py-3 border-b border-white/10">
-        <img src="https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.jpeg" alt="1991RUNNERS" className="w-8 h-8 rounded-lg" />
+        <img src="https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.png" alt="1991RUNNERS" className="w-8 h-8 object-contain" />
         <button onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
