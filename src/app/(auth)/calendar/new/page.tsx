@@ -1,8 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, MapPin, Search, X } from 'lucide-react'
 import Link from 'next/link'
 
 const EVENT_TYPES = [
@@ -10,24 +10,80 @@ const EVENT_TYPES = [
   { value: 'ddayrun', label: '뛰꼬양데이' },
   { value: 'event', label: '행사' },
   { value: 'race', label: '대회' },
-  { value: 'social', label: '번개' },
+  { value: 'social', label: '벙개' },
 ]
+
+interface KakaoPlace {
+  id: string
+  place_name: string
+  address_name: string
+  road_address_name: string
+  x: string
+  y: string
+  place_url: string
+}
 
 export default function NewEventPage() {
   const router = useRouter()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
-    title: '', description: '', location: '',
+    title: '', description: '', location: '', location_url: '',
     event_date: '', event_time: '', event_type: 'run',
   })
+  const [locationQuery, setLocationQuery] = useState('')
+  const [locationResults, setLocationResults] = useState<KakaoPlace[]>([])
+  const [locationSearching, setLocationSearching] = useState(false)
+  const [locationSelected, setLocationSelected] = useState(false)
+  const searchTimeout = useRef<NodeJS.Timeout>()
+
+  const searchLocation = async (query: string) => {
+    if (!query.trim()) { setLocationResults([]); return }
+    setLocationSearching(true)
+    try {
+      const res = await fetch(`/api/kakao-search?query=${encodeURIComponent(query)}`)
+      const data = await res.json()
+      setLocationResults(data.documents ?? [])
+    } catch {
+      setLocationResults([])
+    }
+    setLocationSearching(false)
+  }
+
+  useEffect(() => {
+    if (locationSelected) return
+    clearTimeout(searchTimeout.current)
+    searchTimeout.current = setTimeout(() => searchLocation(locationQuery), 400)
+    return () => clearTimeout(searchTimeout.current)
+  }, [locationQuery, locationSelected])
+
+  const handleSelectLocation = (place: KakaoPlace) => {
+    const kakaoUrl = `https://map.kakao.com/link/map/${place.id}`
+    const naverUrl = `https://map.naver.com/v5/search/${encodeURIComponent(place.place_name)}`
+    setForm({
+      ...form,
+      location: place.place_name,
+      location_url: kakaoUrl,
+    })
+    setLocationQuery(place.place_name)
+    setLocationResults([])
+    setLocationSelected(true)
+  }
+
+  const handleClearLocation = () => {
+    setForm({ ...form, location: '', location_url: '' })
+    setLocationQuery('')
+    setLocationSelected(false)
+    setLocationResults([])
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
     const { error } = await supabase.from('events').insert({
-      title: form.title, description: form.description, location: form.location,
+      title: form.title, description: form.description,
+      location: form.location, location_url: form.location_url,
       event_date: `${form.event_date}T${form.event_time}:00`,
       event_type: form.event_type, created_by: user?.id,
     })
@@ -49,7 +105,7 @@ export default function NewEventPage() {
               {EVENT_TYPES.map(({ value, label }) => (
                 <button key={value} type="button"
                   onClick={() => setForm({...form, event_type: value})}
-                  className={`py-2 px-2 rounded-lg text-xs font-medium transition-colors ${form.event_type === value ? 'bg-[#e94560] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                  className={`py-2 px-2 rounded-lg text-xs font-medium transition-colors ${form.event_type === value ? 'bg-[#c0392b] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                   {label}
                 </button>
               ))}
@@ -71,7 +127,53 @@ export default function NewEventPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">장소 *</label>
-            <input value={form.location} onChange={(e) => setForm({...form, location: e.target.value})} className="input" placeholder="예: 여의도 한강공원" required />
+            <div className="relative">
+              <div className="relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  value={locationQuery}
+                  onChange={(e) => { setLocationQuery(e.target.value); setLocationSelected(false) }}
+                  className="input pl-9 pr-9"
+                  placeholder="장소 검색 (예: 여의도 한강공원)"
+                  required
+                />
+                {locationQuery && (
+                  <button type="button" onClick={handleClearLocation} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+              {locationResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto mt-1">
+                  {locationResults.map((place) => (
+                    <button
+                      key={place.id}
+                      type="button"
+                      onClick={() => handleSelectLocation(place)}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0"
+                    >
+                      <div className="flex items-start gap-2">
+                        <MapPin size={14} className="text-[#c0392b] shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{place.place_name}</p>
+                          <p className="text-xs text-gray-400">{place.road_address_name || place.address_name}</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {locationSearching && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-20 px-4 py-3 mt-1">
+                  <p className="text-sm text-gray-400">검색 중...</p>
+                </div>
+              )}
+            </div>
+            {form.location_url && (
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                <MapPin size={12} />장소가 선택되었습니다
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">상세 내용</label>
