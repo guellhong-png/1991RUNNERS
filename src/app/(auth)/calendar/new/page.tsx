@@ -35,7 +35,7 @@ export default function NewEventPage() {
   const [locationResults, setLocationResults] = useState<KakaoPlace[]>([])
   const [locationSearching, setLocationSearching] = useState(false)
   const [locationSelected, setLocationSelected] = useState(false)
-  const searchTimeout = useRef<NodeJS.Timeout>()
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null)
 
   const searchLocation = async (query: string) => {
     if (!query.trim()) { setLocationResults([]); return }
