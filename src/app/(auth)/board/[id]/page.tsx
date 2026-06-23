@@ -1,10 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
-import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import DeletePostButton from './DeletePostButton'
+import PostActions from './PostActions'
 
 const CATEGORY_BACK: Record<string, string> = {
   news: '/board/news',
@@ -20,8 +19,15 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single()
-  const { data: post } = await supabase.from('posts').select('*, author:profiles!author_id(id, name)').eq('id', id).single()
+  const { data: post } = await supabase.from('posts').select('*, author:profiles!author_id(id, name, avatar_url)').eq('id', id).single()
   if (!post) notFound()
+
+  const { data: comments } = await supabase
+    .from('comments')
+    .select('*, author:profiles!author_id(id, name, avatar_url)')
+    .eq('post_id', id)
+    .order('created_at', { ascending: true })
+
   const canDelete = profile?.role === 'admin' || post.author_id === user?.id
   const backUrl = CATEGORY_BACK[post.category] || '/board/news'
 
@@ -35,13 +41,12 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
         </div>
         {canDelete && <DeletePostButton postId={post.id} backUrl={backUrl} />}
       </div>
-      <div className="card">
-        <div className="flex items-center justify-between text-sm text-gray-500 border-b border-gray-100 pb-4 mb-6">
-          <span>{post.author?.name ?? '알 수 없음'}</span>
-          <span>{format(new Date(post.created_at), 'yyyy년 M월 d일 HH:mm', { locale: ko })}</span>
-        </div>
-        <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{post.content}</p>
-      </div>
+      <PostActions
+        post={post}
+        currentUserId={user!.id}
+        currentUserRole={profile?.role ?? 'member'}
+        initialComments={comments ?? []}
+      />
     </div>
   )
 }
