@@ -65,7 +65,7 @@ export default async function AttendancePage() {
                   <th className="px-3 py-3 font-medium text-gray-600 text-center min-w-12">총합</th>
                   {TYPE_KEYS.map(type => (
                     <th key={type} className="px-3 py-3 font-medium text-gray-600 text-center min-w-16">
-                      <span className={`inline-flex px-1.5 py-0.5 rounded text-xs ${TYPE_COLORS[type]}`}>
+                      <span className={`inline-flex px-1.5 py-0.5 rounded text-xs whitespace-nowrap ${TYPE_COLORS[type]}`}>
                         {TYPE_LABELS[type]}
                       </span>
                     </th>
@@ -106,7 +106,7 @@ export default async function AttendancePage() {
                   <th className="px-3 py-3 font-medium text-gray-600 text-center min-w-12">총</th>
                   {events?.map(event => (
                     <th key={event.id} className="px-2 py-3 font-medium text-gray-600 text-center min-w-16">
-                      <div className={`inline-flex px-1.5 py-0.5 rounded text-xs mb-1 ${TYPE_COLORS[event.event_type] || 'bg-gray-100 text-gray-600'}`}>
+                      <div className={`inline-flex px-1.5 py-0.5 rounded text-xs mb-1 whitespace-nowrap ${TYPE_COLORS[event.event_type] || 'bg-gray-100 text-gray-600'}`}>
                         {TYPE_LABELS[event.event_type] || event.event_type}
                       </div>
                       <div className="text-gray-400 font-normal">{format(new Date(event.event_date), 'M/d', { locale: ko })}</div>
