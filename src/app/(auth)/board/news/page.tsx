@@ -8,7 +8,7 @@ export default async function NewsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single()
-  const { data: posts } = await supabase.from('posts').select('*, author:profiles!author_id(name)')
+  const { data: posts } = await supabase.from('posts').select('*, author:profiles!author_id(name, avatar_url)')
     .eq('category', 'news').order('created_at', { ascending: false })
 
   return (
@@ -27,8 +27,15 @@ export default async function NewsPage() {
             {posts.map((post) => (
               <Link key={post.id} href={`/board/${post.id}`}>
                 <div className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex-1 min-w-0"><p className="font-medium text-gray-900 truncate">{post.title}</p></div>
-                  <div className="text-right shrink-0"><p className="text-xs text-gray-400">{post.author?.name}</p><p className="text-xs text-gray-400 mt-0.5">{format(new Date(post.created_at), 'M/d', { locale: ko })}</p></div>
+                  <div className="w-8 h-8 rounded-full bg-[#c0392b] flex items-center justify-center text-white text-xs font-bold shrink-0 overflow-hidden">
+                    {post.author?.avatar_url
+                      ? <img src={post.author.avatar_url} className="w-full h-full object-cover" alt={post.author.name} />
+                      : post.author?.name?.[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{post.title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{post.author?.name} · {format(new Date(post.created_at), 'M/d', { locale: ko })}</p>
+                  </div>
                 </div>
               </Link>
             ))}
