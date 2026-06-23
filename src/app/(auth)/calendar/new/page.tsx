@@ -35,7 +35,7 @@ export default function NewEventPage() {
   const [locationResults, setLocationResults] = useState<KakaoPlace[]>([])
   const [locationSearching, setLocationSearching] = useState(false)
   const [locationSelected, setLocationSelected] = useState(false)
-  const searchTimeout = useRef<NodeJS.Timeout | null>(null)
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const searchLocation = async (query: string) => {
     if (!query.trim()) { setLocationResults([]); return }
@@ -52,14 +52,15 @@ export default function NewEventPage() {
 
   useEffect(() => {
     if (locationSelected) return
-    clearTimeout(searchTimeout.current)
+    if (searchTimeout.current) clearTimeout(searchTimeout.current)
     searchTimeout.current = setTimeout(() => searchLocation(locationQuery), 400)
-    return () => clearTimeout(searchTimeout.current)
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current)
+    }
   }, [locationQuery, locationSelected])
 
   const handleSelectLocation = (place: KakaoPlace) => {
     const kakaoUrl = `https://map.kakao.com/link/map/${place.id}`
-    const naverUrl = `https://map.naver.com/v5/search/${encodeURIComponent(place.place_name)}`
     setForm({
       ...form,
       location: place.place_name,
