@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft, MapPin, Search, X } from 'lucide-react'
+import { ArrowLeft, MapPin, Search, X, Image } from 'lucide-react'
 import Link from 'next/link'
 
 const EVENT_TYPES = [
@@ -36,6 +36,9 @@ export default function NewEventPage() {
   const [locationSearching, setLocationSearching] = useState(false)
   const [locationSelected, setLocationSelected] = useState(false)
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const searchLocation = async (query: string) => {
     if (!query.trim()) { setLocationResults([]); return }
@@ -61,11 +64,7 @@ export default function NewEventPage() {
 
   const handleSelectLocation = (place: KakaoPlace) => {
     const kakaoUrl = `https://map.kakao.com/link/map/${place.id}`
-    setForm({
-      ...form,
-      location: place.place_name,
-      location_url: kakaoUrl,
-    })
+    setForm({ ...form, location: place.place_name, location_url: kakaoUrl })
     setLocationQuery(place.place_name)
     setLocationResults([])
     setLocationSelected(true)
@@ -78,15 +77,40 @@ export default function NewEventPage() {
     setLocationResults([])
   }
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    // 1MB 이상이면 경고
+    if (file.size > 1024 * 1024) {
+      alert('이미지는 1MB 이하로 업로드해주세요.')
+      return
+    }
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
+
+    let image_url = null
+    if (imageFile) {
+      const ext = imageFile.name.split('.').pop()
+      const path = `${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('event-images').upload(path, imageFile)
+      if (!uploadError) {
+        const { data } = supabase.storage.from('event-images').getPublicUrl(path)
+        image_url = data.publicUrl
+      }
+    }
+
     const { error } = await supabase.from('events').insert({
       title: form.title, description: form.description,
       location: form.location, location_url: form.location_url,
       event_date: `${form.event_date}T${form.event_time}:00`,
       event_type: form.event_type, created_by: user?.id,
+      image_url,
     })
     if (!error) { router.push('/calendar'); router.refresh() }
     setLoading(false)
@@ -147,12 +171,8 @@ export default function NewEventPage() {
               {locationResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto mt-1">
                   {locationResults.map((place) => (
-                    <button
-                      key={place.id}
-                      type="button"
-                      onClick={() => handleSelectLocation(place)}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0"
-                    >
+                    <button key={place.id} type="button" onClick={() => handleSelectLocation(place)}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0">
                       <div className="flex items-start gap-2">
                         <MapPin size={14} className="text-[#c0392b] shrink-0 mt-0.5" />
                         <div>
@@ -171,14 +191,31 @@ export default function NewEventPage() {
               )}
             </div>
             {form.location_url && (
-              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                <MapPin size={12} />장소가 선택되었습니다
-              </p>
+              <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><MapPin size={12} />장소가 선택되었습니다</p>
             )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">상세 내용</label>
             <textarea value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} className="input h-28 resize-none" placeholder="거리, 페이스, 준비물 등" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">사진 (1MB 이하)</label>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+            {imagePreview ? (
+              <div className="relative">
+                <img src={imagePreview} alt="미리보기" className="w-full rounded-lg object-cover max-h-48" />
+                <button type="button" onClick={() => { setImageFile(null); setImagePreview(null) }}
+                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors">
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <button type="button" onClick={() => fileInputRef.current?.click()}
+                className="w-full border-2 border-dashed border-gray-200 rounded-lg py-8 flex flex-col items-center gap-2 text-gray-400 hover:border-gray-300 hover:text-gray-500 transition-colors">
+                <Image size={24} />
+                <span className="text-sm">사진 업로드</span>
+              </button>
+            )}
           </div>
           <div className="flex gap-3 pt-2">
             <Link href="/calendar" className="btn-secondary flex-1 text-center py-3">취소</Link>
