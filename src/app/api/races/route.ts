@@ -4,7 +4,11 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const res = await fetch('https://gorunning.kr/races/', {
+    const targetUrl = 'https://gorunning.kr/races/'
+    // corsproxy.io를 이용해 우회 접속 시도
+    const fetchUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+
+    const res = await fetch(fetchUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
@@ -69,10 +73,9 @@ export async function GET() {
       }
     }
 
-    // 만약 파싱된 데이터가 0개라면 화면에 에러 상태코드와 원본 HTML 일부를 출력합니다.
     if (races.length === 0) {
       races.push({
-        name: `[데이터 없음] 상태코드: ${res.status}`,
+        name: `[데이터 없음] 우회 실패 상태코드: ${res.status}`,
         url: "#",
         distance: "디버깅",
         region: "원인 분석",
