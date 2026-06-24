@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { JSDOM } from 'jsdom'
 
 export async function GET() {
   try {
@@ -11,80 +10,66 @@ export async function GET() {
     })
 
     const html = await res.text()
-    const dom = new JSDOM(html)
-    const document = dom.window.document
-
-    const races: any[] = []
     const today = new Date()
     today.setHours(0, 0, 0, 0)
+    const races: any[] = []
 
-    const monthSections = document.querySelectorAll('h2')
-
-    monthSections.forEach((monthEl) => {
-      const monthText = monthEl.textContent?.trim() ?? ''
-      const monthMatch = monthText.match(/(\d{4})년\s+(\d{2})월/)
-      if (!monthMatch) return
-
+    const monthBlocks = html.split('<h2>')
+    for (const block of monthBlocks) {
+      const monthMatch = block.match(/(\d{4})년\s+(\d{2})월/)
+      if (!monthMatch) continue
       const year = parseInt(monthMatch[1])
       const month = parseInt(monthMatch[2])
 
-      let el = monthEl.nextElementSibling
-      while (el && el.tagName !== 'H2') {
-        if (el.tagName === 'H3') {
-          const dateText = el.textContent?.trim() ?? ''
-          const dateMatch = dateText.match(/(\d{2})월\s+(\d{2})일/)
-          if (dateMatch) {
-            const raceMonth = parseInt(dateMatch[1])
-            const raceDay = parseInt(dateMatch[2])
-            const raceDate = new Date(year, raceMonth - 1, raceDay)
+      const dayBlocks = block.split('<h3>')
+      for (const dayBlock of dayBlocks) {
+        const dateMatch = dayBlock.match(/(\d{2})월\s+(\d{2})일/)
+        if (!dateMatch) continue
+        const raceMonth = parseInt(dateMatch[1])
+        const raceDay = parseInt(dateMatch[2])
+        const raceDate = new Date(year, raceMonth - 1, raceDay)
+        if (raceDate < today) continue
 
-            if (raceDate >= today) {
-              let tableEl = el.nextElementSibling
-              while (tableEl && tableEl.tagName !== 'H3' && tableEl.tagName !== 'H2') {
-                if (tableEl.tagName === 'TABLE') {
-                  const rows = tableEl.querySelectorAll('tbody tr')
-                  rows.forEach((row) => {
-                    const cells = row.querySelectorAll('td')
-                    if (cells.length >= 6) {
-                      const nameEl = cells[1].querySelector('a')
-                      const name = nameEl?.textContent?.trim() ?? ''
-                      const url = nameEl?.getAttribute('href') ?? ''
-                      const distance = cells[2].textContent?.trim() ?? ''
-                      const region = cells[3].textContent?.trim() ?? ''
-                      const location = cells[4].textContent?.trim() ?? ''
-                      const statusText = cells[6]?.textContent?.trim() ?? cells[5]?.textContent?.trim() ?? ''
+        const rowMatches = dayBlock.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)
+        for (const rowMatch of rowMatches) {
+          const row = rowMatch[1]
+          const cells = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(m => m[1].replace(/<[^>]+>/g, '').trim())
+          if (cells.length < 5) continue
 
-                      let status = '등록마감'
-                      if (statusText.includes('등록중')) status = '등록중'
-                      else if (statusText.includes('등록예정') || statusText.includes('예정')) status = '등록예정'
+          const nameMatch = row.match(/href="([^"]+)"[^>]*>([^<]+)</)
+          if (!nameMatch) continue
 
-                      if (name) {
-                        races.push({
-                          name,
-                          url: url.startsWith('http') ? url : `https://gorunning.kr${url}`,
-                          distance,
-                          region,
-                          location,
-                          status,
-                          date: raceDate.toISOString().split('T')[0],
-                          dateLabel: `${raceMonth}월 ${raceDay}일`,
-                          month: `${year}년 ${String(raceMonth).padStart(2, '0')}월`,
-                        })
-                      }
-                    }
-                  })
-                }
-                tableEl = tableEl.nextElementSibling
-              }
-            }
+          const name = nameMatch[2].trim()
+          const url = nameMatch[1].startsWith('http') ? nameMatch[1] : `https://gorunning.kr${nameMatch[1]}`
+          const distance = cells[2] || ''
+          const region = cells[3] || ''
+          const location = cells[4] || ''
+          const statusRaw = cells[cells.length - 1] || ''
+
+          let status = '등록마감'
+          if (statusRaw.includes('등록중')) status = '등록중'
+          else if (statusRaw.includes('예정')) status = '등록예정'
+
+          if (name && name.length > 1) {
+            races.push({
+              name,
+              url,
+              distance,
+              region,
+              location,
+              status,
+              date: raceDate.toISOString().split('T')[0],
+              dateLabel: `${raceMonth}월 ${raceDay}일`,
+              dayOfWeek: ['일', '월', '화', '수', '목', '금', '토'][raceDate.getDay()],
+              month: `${year}년 ${String(raceMonth).padStart(2, '0')}월`,
+            })
           }
         }
-        el = el.nextElementSibling
       }
-    })
+    }
 
     return NextResponse.json({ races })
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch races', races: [] }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch', races: [] }, { status: 500 })
   }
 }
