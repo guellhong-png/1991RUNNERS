@@ -11,82 +11,103 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 async function run() {
-  console.log('🏃‍♂️ 마라톤온라인으로 로봇 출발합니다...')
+  console.log('🏃‍♂️ 블로그 비법 반영! 로드런(roadrun.co.kr)으로 로봇 출발합니다...')
   try {
-    // 마라톤온라인은 사람처럼 보이도록 아래 헤더 세팅이 핵심입니다.
-    const res = await fetch('http://www.marathon.pe.kr/schedule/index.html', {
+    // 1. 방화벽 없는 로드런 사이트의 대회 일정 페이지 요청
+    const res = await fetch('http://www.roadrun.co.kr/schedule/list.php', {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       }
     })
     
-    // 이 사이트는 한글이 깨지지 않게 구형 인코딩(EUC-KR) 처리가 필요한 경우가 있어 텍스트를 정밀하게 받아옵니다.
+    // 이 사이트는 한글 깨짐 방지를 위해 EUC-KR 디코딩이 필수입니다.
     const buffer = await res.arrayBuffer();
     const decoder = new TextDecoder('euc-kr');
     const html = decoder.decode(buffer);
     
     const races = []
 
-    // 마라톤온라인의 HTML 구조(테이블)에서 데이터를 뽑아내는 규칙입니다.
-    const rowMatches = html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)
-    
-    for (const rowMatch of rowMatches) {
-      const row = rowMatch[1]
-      // td 태그 안의 텍스트들을 청소해서 가져옴
-      const cells = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map(m => m[1].replace(/<[^>]+>/g, '').trim())
+    // 2. HTML 구조에서 테이블의 행(tr)들을 정밀 파싱합니다.
+    const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    const trMatches = [...html.matchAll(trRegex)];
+
+    for (const match of trMatches) {
+      const trContent = match[1];
       
-      // 마라톤온라인 스케줄 테이블 구조에 맞게 필터링 (날짜, 대회명, 장소 등이 있는 행만)
-      if (cells.length < 5 || !cells[0].match(/\d{2}\/\d{2}/)) continue
+      // td 태그 안의 순수 텍스트 추출
+      const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+      const cells = [...trContent.matchAll(tdRegex)].map(m => {
+        return m[1].replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+      });
 
-      const nameMatch = row.match(/href\s*=\s*"([^"]+)"[^>]*>([\s\S]*?)<\/a>/i)
-      const url = nameMatch ? (nameMatch[1].startsWith('http') ? nameMatch[1] : `http://www.marathon.pe.kr/schedule/${nameMatch[1]}`) : '#'
-      const rawName = nameMatch ? nameMatch[2].replace(/<[^>]+>/g, '').trim() : cells[1]
+      // 로드런 사이트 특성상 유효한 대회 리스트 행만 필터링 (링크가 있고 날짜 형태가 맞아야 함)
+      if (cells.length >= 5 && trContent.includes('view.php')) {
+        
+        // 대회 상세 링크와 진짜 대회 이름 추출
+        const linkMatch = trContent.match(/href\s*=\s*['"]?([^'"]*view\.php[^'"]*)['"]?[^>]*>([\s\S]+?)<\/a>/i);
+        let url = '#';
+        let name = cells[1];
 
-      // 날짜 파싱 (예: "03/15" -> "2026-03-15")
-      const [mm, dd] = cells[0].split('/')
-      const currentYear = new Date().getFullYear() // 2026
-      const raceDateStr = `${currentYear}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`
-      const raceDate = new Date(currentYear, parseInt(mm) - 1, parseInt(dd))
+        if (linkMatch) {
+          url = `http://www.roadrun.co.kr/schedule/${linkMatch[1].trim()}`;
+          name = linkMatch[2].replace(/<[^>]+>/g, '').trim();
+        }
 
-      // 접수 상태 판단
-      let status = '등록중'
-      if (row.includes('마감') || html.includes('종료')) status = '등록마감'
+        // 날짜 파싱 (로드런은 보통 "2026-03-15" 또는 "2026.03.15" 형태로 들어옵니다)
+        const dateRaw = cells.find(c => c.match(/^\d{4}[-.]\d{2}[-.]\d{2}$/));
+        if (!dateRaw) continue;
 
-      if (rawName && rawName.length > 1) {
-        races.push({
-          name: rawName,
-          url,
-          distance: cells[2] || '일반', 
-          region: cells[3] || '전국',    
-          location: cells[3] || '상세장소 참조', 
-          status,
-          race_date: raceDateStr,
-          date_label: `${parseInt(mm)}월 ${parseInt(dd)}일`,
-          day_of_week: ['일', '월', '화', '수', '목', '금', '토'][raceDate.getDay()] || '일',
-          month_label: `${currentYear}년 ${mm.padStart(2, '0')}월`,
-        })
+        const raceDateStr = dateRaw.replace(/\./g, '-');
+        const [year, month, day] = raceDateStr.split('-');
+        const raceDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+        // 접수 상태 판단 (텍스트 기반)
+        let status = '등록중';
+        if (trContent.includes('마감') || trContent.includes('종료') || cells.join(' ').includes('마감')) {
+          status = '등록마감';
+        } else if (trContent.includes('예정')) {
+          status = '등록예정';
+        }
+
+        // 장소 및 코스 추출
+        const region = cells[2] || '전국';
+        const location = cells[2] || '상세내용 참조';
+        const distance = cells[3] || '풀코스, 하프, 10km';
+
+        if (name && name.length > 1) {
+          races.push({
+            name,
+            url,
+            distance,
+            region,
+            location,
+            status,
+            race_date: raceDateStr,
+            date_label: `${parseInt(month)}월 ${parseInt(day)}일`,
+            day_of_week: ['일', '월', '화', '수', '목', '금', '토'][raceDate.getDay()] || '일',
+            month_label: `${year}년 ${month}월`,
+          });
+        }
       }
     }
 
-    console.log(`✅ 총 ${races.length}개의 실제 대회를 찾았습니다!`)
+    console.log(`✅ 대성공! 로드런 사이트에서 총 ${races.length}개의 고퀄리티 대회를 긁어왔습니다.`);
 
     if (races.length > 0) {
-      console.log('기존 테스트 데이터를 삭제하는 중...')
+      console.log('기존 임시 테스트 데이터 삭제 중...');
       await supabase.from('races').delete().neq('id', 0)
 
-      console.log('최신 데이터를 Supabase에 저장하는 중...')
+      console.log('최신 로드런 데이터를 Supabase DB에 저장 중...');
       const { error: insertError } = await supabase.from('races').insert(races)
       if (insertError) throw insertError
 
-      console.log('🎉 Supabase 자동 업데이트 완벽 종료!')
+      console.log('🎉 로드런 자동 업데이트 완벽하게 완료되었습니다!');
     } else {
-      console.log('❌ 크롤링된 데이터가 없습니다. 주소를 다시 확인해 주세요.')
+      console.log('❌ 데이터를 찾지 못했습니다. 구조나 주소를 다시 확인해 주세요.');
     }
 
   } catch (e) {
-    console.error('에러 발생:', e)
+    console.error('로봇 치명적 에러 발생:', e)
     process.exit(1)
   }
 }
