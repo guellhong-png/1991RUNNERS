@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, MapPin, Search, X, Image } from 'lucide-react'
 import Link from 'next/link'
@@ -25,6 +25,7 @@ interface KakaoPlace {
 
 export default function NewEventPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
@@ -39,6 +40,30 @@ export default function NewEventPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // URL 파라미터로 폼 자동 채우기
+  useEffect(() => {
+    const title = searchParams.get('title') || ''
+    const location = searchParams.get('location') || ''
+    const date = searchParams.get('date') || ''
+    const event_type = searchParams.get('event_type') || 'run'
+    const description = searchParams.get('description') || ''
+
+    if (title || date) {
+      setForm(prev => ({
+        ...prev,
+        title,
+        location,
+        event_date: date,
+        event_type,
+        description,
+      }))
+      if (location) {
+        setLocationQuery(location)
+        setLocationSelected(true)
+      }
+    }
+  }, [])
 
   const searchLocation = async (query: string) => {
     if (!query.trim()) { setLocationResults([]); return }
@@ -150,7 +175,7 @@ export default function NewEventPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">장소 *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">장소</label>
             <div className="relative">
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -159,7 +184,6 @@ export default function NewEventPage() {
                   onChange={(e) => { setLocationQuery(e.target.value); setLocationSelected(false) }}
                   className="input pl-9 pr-9"
                   placeholder="장소 검색 (예: 여의도 한강공원)"
-                  required
                 />
                 {locationQuery && (
                   <button type="button" onClick={handleClearLocation} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -217,7 +241,7 @@ export default function NewEventPage() {
             )}
           </div>
           <div className="flex gap-3 pt-2">
-            <Link href="/calendar" className="btn-secondary flex-1 text-center py-3">취소</Link>
+            <Link href="/races" className="btn-secondary flex-1 text-center py-3">취소</Link>
             <button type="submit" disabled={loading} className="btn-primary flex-1 py-3 disabled:opacity-50">{loading ? '등록 중...' : '모임 등록'}</button>
           </div>
         </form>
