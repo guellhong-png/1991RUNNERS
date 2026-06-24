@@ -26,20 +26,14 @@ async function getRegDates(no) {
   try {
     const html = await fetchEucKr(`http://www.roadrun.co.kr/schedule/view.php?no=${no}`)
     const $ = cheerio.load(html)
-    
-    // 첫 번째 대회만 전체 텍스트 출력 (디버깅용)
-    if (no === '41573' || no === '41545') {
-      const bodyText = $('body').text().replace(/\s+/g, ' ').trim()
-      console.log(`\n=== 상세페이지 no=${no} ===`)
-      console.log(bodyText.substring(0, 500))
-      console.log('===')
-    }
+    const bodyText = $('body').text().replace(/\s+/g, ' ').trim()
+
+    // 디버그: 첫 300자 출력
+    console.log(`[no=${no}] ${bodyText.substring(0, 300)}`)
 
     let regStart = null
     let regEnd = null
-    
-    const bodyText = $('body').text().replace(/\s+/g, ' ').trim()
-    
+
     const regPeriodMatch = bodyText.match(/접수\s*기간[^\d]*(\d{4})[.\-\/](\d{2})[.\-\/](\d{2})[^~\d]*[~\-][^~\d]*(\d{4})[.\-\/](\d{2})[.\-\/](\d{2})/)
     if (regPeriodMatch) {
       regStart = `${regPeriodMatch[1]}-${regPeriodMatch[2]}-${regPeriodMatch[3]}`
@@ -51,9 +45,10 @@ async function getRegDates(no) {
         regEnd = `${dateMatches[1][1]}-${dateMatches[1][2]}-${dateMatches[1][3]}`
       }
     }
-    
+
     return { regStart, regEnd }
   } catch (e) {
+    console.log(`[no=${no}] 에러: ${e.message}`)
     return { regStart: null, regEnd: null }
   }
 }
@@ -62,13 +57,11 @@ async function run() {
   console.log('🏃 [v4 접수일 포함] 로드런 사이트 탐색 시작...')
   try {
     const html = await fetchEucKr('http://www.roadrun.co.kr/schedule/list.php')
-    const $ = cheerio.load(html)
+    const lines = html.split('\n')
     const races = []
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const currentYear = today.getFullYear()
-
-    const lines = html.split('\n')
     let currentMonth = 0
     let currentDay = 0
 
@@ -87,13 +80,10 @@ async function run() {
       if (line.includes('view.php') && currentMonth > 0) {
         const noMatch = line.match(/view\.php\?no=(\d+)/)
         if (!noMatch) continue
-
         const nameMatch = line.match(/view\.php[^>]+>([^<]+)</)
         if (!nameMatch) continue
-
         const name = nameMatch[1].trim()
         if (!name || name.length < 2) continue
-
         const no = noMatch[1]
 
         let intYear = currentYear
@@ -135,7 +125,6 @@ async function run() {
     console.log(`✅ 목록 수집 완료: ${races.length}개`)
     console.log('🔍 상세 페이지에서 접수일 파싱 시작...')
 
-    // 상세 페이지에서 접수일 파싱 (3개씩 병렬)
     const BATCH = 3
     for (let i = 0; i < races.length; i += BATCH) {
       const batch = races.slice(i, i + BATCH)
@@ -143,13 +132,10 @@ async function run() {
         const { regStart, regEnd } = await getRegDates(race.no)
         race.reg_start = regStart
         race.reg_end = regEnd
-        console.log(`  ${race.name}: 접수 ${regStart} ~ ${regEnd}`)
       }))
-      // 서버 부하 방지
       await new Promise(r => setTimeout(r, 500))
     }
 
-    // no 필드 제거 후 저장
     const toInsert = races.map(({ no, ...rest }) => rest)
 
     console.log(`\n✅ 수집 완료: ${toInsert.length}개`)
