@@ -34,7 +34,7 @@ export default function RacesPage() {
       (distanceFilter === '풀코스' && r.distance.includes('풀')) ||
       (distanceFilter === '하프' && r.distance.includes('하프')) ||
       (distanceFilter === '10km' && r.distance.includes('10km')) ||
-      (distanceFilter === '트레일' && (r.distance.includes('K') || r.distance.includes('km') && !r.distance.includes('하프') && !r.distance.includes('풀')))
+      (distanceFilter === '트레일' && r.distance.includes('K'))
     const statusOk = statusFilter === '전체' || r.status === statusFilter
     return distanceOk && statusOk
   })
@@ -48,10 +48,10 @@ export default function RacesPage() {
   const handleCalendarRegister = (race: Race) => {
     const params = new URLSearchParams({
       title: race.name,
-      location: `${race.region} · ${race.location}`,
+      location: race.region + ' · ' + race.location,
       date: race.date,
     })
-    router.push(`/calendar/new?${params.toString()}`)
+    router.push('/calendar/new?' + params.toString())
   }
 
   const statusColor = (status: string) => {
@@ -73,7 +73,7 @@ export default function RacesPage() {
             onChange={e => setDistanceFilter(e.target.value)}
             className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#c0392b] text-gray-700"
           >
-            <option>전체 거리</option>
+            <option value="전체">전체 거리</option>
             <option value="풀코스">풀코스</option>
             <option value="하프">하프</option>
             <option value="10km">10km</option>
@@ -116,7 +116,10 @@ export default function RacesPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: sc.bg, color: sc.color }}>
+                          <span
+                            className="text-xs px-2 py-0.5 rounded-full font-medium"
+                            style={{ background: sc.bg, color: sc.color }}
+                          >
                             {race.status}
                           </span>
                           {race.distance && (
@@ -127,17 +130,15 @@ export default function RacesPage() {
                         </div>
                         <p className="font-medium text-gray-900 mb-1">{race.name}</p>
                         <p className="text-sm text-gray-500">
-                          📅 {race.dateLabel} ({race.dayOfWeek})
-                          <span className="mx-2 text-gray-300">|</span>
-                          📍 {race.region} · {race.location}
+                          {race.dateLabel} ({race.dayOfWeek}) &nbsp;|&nbsp; {race.region} · {race.location}
                         </p>
                       </div>
-                      <div className="flex flex-col gap-2 shrink-0" style={{ width: '80px' }}>
+                      <div className="flex flex-col gap-2 shrink-0 w-20">
                         
                           href={race.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs py-1.5 rounded-lg text-center text-white font-medium"
+                          className="text-xs py-1.5 rounded-lg text-center text-white font-medium block"
                           style={{ background: '#c0392b' }}
                         >
                           보러가기
@@ -159,7 +160,6 @@ export default function RacesPage() {
           </div>
         ))
       )}
-
       <p className="text-xs text-gray-400 text-center">데이터 출처: 고러닝(gorunning.kr)</p>
     </div>
   )
