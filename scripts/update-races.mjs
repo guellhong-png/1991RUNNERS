@@ -22,6 +22,12 @@ async function fetchEucKr(url) {
   return decoder.decode(buffer)
 }
 
+function isValidDate(dateStr) {
+  if (!dateStr) return false
+  const d = new Date(dateStr)
+  return d instanceof Date && !isNaN(d) && d.toISOString().startsWith(dateStr)
+}
+
 async function getRegDates(no) {
   try {
     const html = await fetchEucKr(`http://www.roadrun.co.kr/schedule/view.php?no=${no}`)
@@ -31,14 +37,12 @@ async function getRegDates(no) {
     let regStart = null
     let regEnd = null
 
-    // 패턴 1: "접수기간 2026년5월13일~2026년6월17일"
     const pattern1 = bodyText.match(/접수기간\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*~\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/)
     if (pattern1) {
       regStart = `${pattern1[1]}-${String(pattern1[2]).padStart(2,'0')}-${String(pattern1[3]).padStart(2,'0')}`
       regEnd = `${pattern1[4]}-${String(pattern1[5]).padStart(2,'0')}-${String(pattern1[6]).padStart(2,'0')}`
     }
 
-    // 패턴 2: "접수기간 2026.05.13~2026.06.17"
     if (!regStart) {
       const pattern2 = bodyText.match(/접수기간\s*(\d{4})[.\-](\d{2})[.\-](\d{2})\s*~\s*(\d{4})[.\-](\d{2})[.\-](\d{2})/)
       if (pattern2) {
@@ -47,7 +51,6 @@ async function getRegDates(no) {
       }
     }
 
-    // 패턴 3: "접수기간 2026년5월13일~6월17일" (연도 한번만)
     if (!regStart) {
       const pattern3 = bodyText.match(/접수기간\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*~\s*(\d{1,2})월\s*(\d{1,2})일/)
       if (pattern3) {
@@ -55,6 +58,10 @@ async function getRegDates(no) {
         regEnd = `${pattern3[1]}-${String(pattern3[4]).padStart(2,'0')}-${String(pattern3[5]).padStart(2,'0')}`
       }
     }
+
+    // 유효하지 않은 날짜 null 처리
+    if (!isValidDate(regStart)) regStart = null
+    if (!isValidDate(regEnd)) regEnd = null
 
     if (regStart) {
       console.log(`  ✅ [no=${no}] 접수: ${regStart} ~ ${regEnd}`)
@@ -69,7 +76,7 @@ async function getRegDates(no) {
 }
 
 async function run() {
-  console.log('🏃 [v5 접수일 포함] 로드런 사이트 탐색 시작...')
+  console.log('🏃 [v6 접수일 포함] 로드런 사이트 탐색 시작...')
   try {
     const html = await fetchEucKr('http://www.roadrun.co.kr/schedule/list.php')
     const lines = html.split('\n')
