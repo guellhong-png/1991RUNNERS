@@ -228,13 +228,13 @@ export default function RacesPage() {
                               <span className="text-sm font-bold text-[#c0392b]">{dday}</span>
                             )}
                             <div className="flex gap-1.5">
-                              
+                            <a
                                 href={race.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-xs py-1.5 px-3 rounded-lg text-center text-white font-medium whitespace-nowrap"
                                 style={{ background: '#c0392b' }}
-                              >
+                            
                                 접수하기
                               </a>
                               <button
