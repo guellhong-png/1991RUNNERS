@@ -1,0 +1,29 @@
+name: 고러닝 대회 일정 자동 크롤러
+
+on:
+  # 매일 새벽 4시 (한국시간 기준)에 알아서 실행되도록 예약
+  schedule:
+    - cron: '0 19 * * *'
+  # 수동으로 버튼을 눌러서 실행할 수 있는 옵션
+  workflow_dispatch:
+
+jobs:
+  scrape-and-update-db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 가져오기
+        uses: actions/checkout@v3
+
+      - name: Node.js 세팅하기
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Supabase 연결 패키지 설치
+        run: npm install @supabase/supabase-js
+
+      - name: 크롤러 스크립트 실행 (DB 업데이트)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/update-races.mjs
