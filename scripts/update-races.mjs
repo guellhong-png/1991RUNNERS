@@ -12,7 +12,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 async function run() {
-  console.log('🏃 [정밀 타격 모드 v2] 로드런 사이트 탐색 시작...')
+  console.log('🏃 [v3] 로드런 사이트 탐색 시작...')
   try {
     const res = await fetch('http://www.roadrun.co.kr/schedule/list.php', {
       headers: {
@@ -27,119 +27,88 @@ async function run() {
     const races = []
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-
-    // 현재 날짜 기준 연도
     const currentYear = today.getFullYear()
-    
-    // 날짜 헤더를 추적하면서 파싱
+
+    // HTML 원문에서 날짜+대회 블록을 직접 정규식으로 파싱
+    // 패턴: <b>6/5</b> 또는 6/5 형태 날짜 + view.php 링크
+    const lines = html.split('\n')
     let currentMonth = 0
     let currentDay = 0
 
-    // 모든 tr을 순서대로 순회
-    $('tr').each((i, el) => {
-      const trText = $(el).text().replace(/\s+/g, ' ').trim()
-      
-      // 날짜 행 감지: "6/5 (금)" 또는 "6/5(금)" 패턴
-      const dateHeaderMatch = trText.match(/^(\d{1,2})\/(\d{1,2})\s*\(([가-힣])\)/)
-      if (dateHeaderMatch) {
-        currentMonth = parseInt(dateHeaderMatch[1])
-        currentDay = parseInt(dateHeaderMatch[2])
-        return
+    for (const line of lines) {
+      // 날짜 패턴 감지: >6/5< 또는 >6/5(금)< 형태
+      const dateMatch = line.match(/>(\d{1,2})\/(\d{1,2})\s*(?:\([가-힣]\))?</)
+      if (dateMatch) {
+        const m = parseInt(dateMatch[1])
+        const d = parseInt(dateMatch[2])
+        if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+          currentMonth = m
+          currentDay = d
+        }
+        continue
       }
 
-      // 대회명 링크가 있는 행
-      const nameAnchor = $(el).find('a[href*="view.php"]').first()
-      if (nameAnchor.length === 0) return
-      if (currentMonth === 0) return // 날짜 헤더 없이 나온 대회는 스킵
+      // 대회 링크 감지
+      if (line.includes('view.php') && currentMonth > 0) {
+        const noMatch = line.match(/view\.php\?no=(\d+)/)
+        if (!noMatch) continue
 
-      const name = nameAnchor.text().trim()
-      if (!name || name.length < 2) return
+        const nameMatch = line.match(/view\.php[^>]+>([^<]+)</)
+        if (!nameMatch) continue
 
-      let rawUrl = nameAnchor.attr('href') || '#'
-      // javascript:open_window('win', 'view.php?no=41409', ...) 에서 URL 추출
-      const noMatch = rawUrl.match(/view\.php\?no=(\d+)/)
-      const url = noMatch
-        ? `http://www.roadrun.co.kr/schedule/view.php?no=${noMatch[1]}`
-        : `http://www.roadrun.co.kr/schedule/${rawUrl}`
+        const name = nameMatch[1].trim()
+        if (!name || name.length < 2) continue
 
-      // 날짜 유효성 검사
-      const intYear = currentMonth < today.getMonth() + 1 ? currentYear + 1 : currentYear
-      const raceDate = new Date(intYear, currentMonth - 1, currentDay)
-      if ((raceDate.getMonth() + 1) !== currentMonth || raceDate.getDate() !== currentDay) return
-      if (raceDate < today) return
+        const no = noMatch[1]
+        const url = `http://www.roadrun.co.kr/schedule/view.php?no=${no}`
 
-      const month = String(currentMonth).padStart(2, '0')
-      const day = String(currentDay).padStart(2, '0')
-      const raceDateStr = `${intYear}-${month}-${day}`
+        // 날짜 유효성
+        let intYear = currentYear
+        if (currentMonth < today.getMonth() + 1) intYear = currentYear + 1
 
-      // td에서 장소, 종목 추출
-      const tds = $(el).find('td')
-      let location = '전국'
-      let distance = '풀코스, 하프, 10km'
+        const raceDate = new Date(intYear, currentMonth - 1, currentDay)
+        if ((raceDate.getMonth() + 1) !== currentMonth || raceDate.getDate() !== currentDay) continue
+        if (raceDate < today) continue
 
-      if (tds.length >= 3) {
-        // 대회명 td 다음 td들에서 장소와 종목 추출
-        const allTdTexts = []
-        tds.each((_, td) => {
-          const txt = $(td).text().replace(/\s+/g, ' ').trim()
-          if (txt && txt !== name) allTdTexts.push(txt)
+        const month = String(currentMonth).padStart(2, '0')
+        const day = String(currentDay).padStart(2, '0')
+
+        // 같은 행에서 종목 추출 (km 패턴)
+        const distanceMatch = line.match(/([풀하프\d,\s]+(?:km|K|마일)[^\s<]*)/)
+        let distance = distanceMatch ? distanceMatch[1].trim() : ''
+        if (distance.includes('풀') && !distance.includes('풀코스')) {
+          distance = distance.replace(/풀/g, '풀코스')
+        }
+
+        // 상태
+        let status = '등록중'
+        if (line.includes('마감') || line.includes('종료')) status = '등록마감'
+        else if (line.includes('예정')) status = '등록예정'
+
+        console.log(`✅ ${name} / ${intYear}-${month}-${day}`)
+
+        races.push({
+          name,
+          url,
+          distance: distance || '정보 없음',
+          region: '',
+          location: '',
+          status,
+          race_date: `${intYear}-${month}-${day}`,
+          date_label: `${currentMonth}월 ${currentDay}일`,
+          day_of_week: ['일', '월', '화', '수', '목', '금', '토'][raceDate.getDay()],
+          month_label: `${intYear}년 ${month}월`,
         })
-        
-        // 장소 패턴: 지역명 (시/도/군/구)
-        for (const txt of allTdTexts) {
-          if (txt.match(/[가-힣]{2,}(시|도|군|구|면|동)/)) {
-            location = txt.replace(/\s+/g, ' ').trim()
-            break
-          }
-        }
-        
-        // 종목 패턴: km, 풀, 하프 포함
-        for (const txt of allTdTexts) {
-          if (txt.match(/(km|풀|하프|마일|K\b)/i)) {
-            distance = txt.trim()
-            break
-          }
-        }
       }
-
-      // 풀 → 풀코스 표준화
-      if (distance.includes('풀') && !distance.includes('풀코스')) {
-        distance = distance.replace(/풀/g, '풀코스')
-      }
-
-      // 상태 판단
-      const rowText = $(el).text()
-      let status = '등록중'
-      if (rowText.includes('마감') || rowText.includes('종료')) {
-        status = '등록마감'
-      } else if (rowText.includes('예정')) {
-        status = '등록예정'
-      }
-
-      races.push({
-        name,
-        url,
-        distance,
-        region: location.slice(0, 2),
-        location,
-        status,
-        race_date: raceDateStr,
-        date_label: `${currentMonth}월 ${currentDay}일`,
-        day_of_week: ['일', '월', '화', '수', '목', '금', '토'][raceDate.getDay()],
-        month_label: `${intYear}년 ${month}월`,
-      })
-    })
-
-    console.log(`✅ 수집된 대회: 총 ${races.length}개`)
-    if (races.length > 0) {
-      console.log('샘플 데이터:', JSON.stringify(races[0], null, 2))
     }
+
+    console.log(`\n✅ 수집된 대회: 총 ${races.length}개`)
 
     if (races.length > 0) {
       await supabase.from('races').delete().neq('id', 0)
       const { error } = await supabase.from('races').insert(races)
       if (error) throw error
-      console.log(`🎉 [대성공] ${races.length}개 대회 저장 완료!`)
+      console.log(`🎉 [대성공] ${races.length}개 저장 완료!`)
     } else {
       console.log('❌ 수집된 데이터가 없습니다.')
     }
