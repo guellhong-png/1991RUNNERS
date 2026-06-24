@@ -27,19 +27,24 @@ async function getRegDates(no) {
     const html = await fetchEucKr(`http://www.roadrun.co.kr/schedule/view.php?no=${no}`)
     const $ = cheerio.load(html)
     
+    // 첫 번째 대회만 전체 텍스트 출력 (디버깅용)
+    if (no === '41573' || no === '41545') {
+      const bodyText = $('body').text().replace(/\s+/g, ' ').trim()
+      console.log(`\n=== 상세페이지 no=${no} ===`)
+      console.log(bodyText.substring(0, 500))
+      console.log('===')
+    }
+
     let regStart = null
     let regEnd = null
     
-    // 접수 기간 파싱: "2026.03.01 ~ 2026.06.27" 형태
-    const bodyText = $('body').text().replace(/\s+/g, ' ')
+    const bodyText = $('body').text().replace(/\s+/g, ' ').trim()
     
-    // 접수기간 패턴
     const regPeriodMatch = bodyText.match(/접수\s*기간[^\d]*(\d{4})[.\-\/](\d{2})[.\-\/](\d{2})[^~\d]*[~\-][^~\d]*(\d{4})[.\-\/](\d{2})[.\-\/](\d{2})/)
     if (regPeriodMatch) {
       regStart = `${regPeriodMatch[1]}-${regPeriodMatch[2]}-${regPeriodMatch[3]}`
       regEnd = `${regPeriodMatch[4]}-${regPeriodMatch[5]}-${regPeriodMatch[6]}`
     } else {
-      // 단순 날짜 패턴 2개 연속
       const dateMatches = [...bodyText.matchAll(/(\d{4})[.\-](\d{2})[.\-](\d{2})/g)]
       if (dateMatches.length >= 2) {
         regStart = `${dateMatches[0][1]}-${dateMatches[0][2]}-${dateMatches[0][3]}`
