@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 
-// 1. Vercel이 빈 데이터를 기억하지 못하도록 매번 무조건 최신 데이터를 가져오게 강제합니다.
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
@@ -8,8 +7,9 @@ export async function GET() {
     const res = await fetch('https://gorunning.kr/races/', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
       },
-      // 이전의 캐시 설정(revalidate) 삭제
     })
 
     const html = await res.text()
@@ -29,9 +29,6 @@ export async function GET() {
         const raceMonth = parseInt(dateMatch[1])
         const raceDay = parseInt(dateMatch[2])
         const raceDate = new Date(year, raceMonth - 1, raceDay)
-
-        // 2. 과거 대회 숨김 로직을 임시로 해제했습니다. (데이터가 들어오는지 확인하기 위함)
-        // if (raceDate < new Date()) continue
 
         const rowMatches = dayBlock.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)
         for (const rowMatch of rowMatches) {
@@ -72,8 +69,37 @@ export async function GET() {
       }
     }
 
+    // 만약 파싱된 데이터가 0개라면 화면에 에러 상태코드와 원본 HTML 일부를 출력합니다.
+    if (races.length === 0) {
+      races.push({
+        name: `[데이터 없음] 상태코드: ${res.status}`,
+        url: "#",
+        distance: "디버깅",
+        region: "원인 분석",
+        location: html.substring(0, 80).replace(/</g, '['),
+        status: "등록중",
+        date: "2026-06-24",
+        dateLabel: "에러",
+        dayOfWeek: "확인",
+        month: "디버깅 메시지",
+      })
+    }
+
     return NextResponse.json({ races })
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch', races: [] }, { status: 500 })
+  } catch (error: any) {
+    return NextResponse.json({ 
+      races: [{
+        name: `[서버 에러] ${error.message}`,
+        url: "#",
+        distance: "에러",
+        region: "Vercel",
+        location: "서버 내부 오류",
+        status: "등록마감",
+        date: "2026-06-24",
+        dateLabel: "에러",
+        dayOfWeek: "확인",
+        month: "디버깅 메시지",
+      }]
+    })
   }
 }
