@@ -83,13 +83,15 @@ export default function RacesPage() {
   }
 
   const handleCalendarRegister = (race: Race) => {
-    const params = new URLSearchParams({
-      title: race.name,
-      location: race.location || '',
-      date: race.race_date,
-    })
-    router.push('/calendar/new?' + params.toString())
-  }
+  const params = new URLSearchParams({
+    title: race.name,
+    location: race.location || '',
+    date: race.race_date,
+    event_type: 'race',
+    description: race.homepage_url ? '공식 홈페이지: ' + race.homepage_url : '',
+  })
+  router.push('/calendar/new?' + params.toString())
+}
 
   const calYear = calMonth.getFullYear()
   const calMonthNum = calMonth.getMonth()
