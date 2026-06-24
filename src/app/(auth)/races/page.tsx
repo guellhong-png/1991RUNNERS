@@ -26,7 +26,7 @@ export default function RacesPage() {
   const [races, setRaces] = useState<Race[]>([])
   const [loading, setLoading] = useState(true)
   const [distanceFilter, setDistanceFilter] = useState('전체')
-  const [statusFilter, setStatusFilter] = useState('전체')
+  const [statusFilter, setStatusFilter] = useState('등록중')
   const [searchQuery, setSearchQuery] = useState('')
   const [view, setView] = useState<'list' | 'calendar'>('list')
   const [calMonth, setCalMonth] = useState(() => {
