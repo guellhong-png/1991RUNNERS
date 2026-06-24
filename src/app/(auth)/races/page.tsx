@@ -27,6 +27,7 @@ export default function RacesPage() {
   const [loading, setLoading] = useState(true)
   const [distanceFilter, setDistanceFilter] = useState('전체')
   const [statusFilter, setStatusFilter] = useState('전체')
+  const [searchQuery, setSearchQuery] = useState('')
   const [view, setView] = useState<'list' | 'calendar'>('list')
   const [calMonth, setCalMonth] = useState(() => {
     const now = new Date()
@@ -67,7 +68,11 @@ export default function RacesPage() {
       (distanceFilter === '10km' && r.distance.includes('10km')) ||
       (distanceFilter === '트레일' && (r.distance.toLowerCase().includes('k') || r.name.includes('트레일')))
     const statusOk = statusFilter === '전체' || r.status === statusFilter
-    return distanceOk && statusOk
+    const searchOk = searchQuery === '' ||
+      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.region.toLowerCase().includes(searchQuery.toLowerCase())
+    return distanceOk && statusOk && searchOk
   })
 
   const grouped = filtered.reduce((acc, race) => {
@@ -83,15 +88,15 @@ export default function RacesPage() {
   }
 
   const handleCalendarRegister = (race: Race) => {
-  const params = new URLSearchParams({
-    title: race.name,
-    location: race.location || '',
-    date: race.race_date,
-    event_type: 'race',
-    description: race.homepage_url ? '공식 홈페이지: ' + race.homepage_url : '',
-  })
-  router.push('/calendar/new?' + params.toString())
-}
+    const params = new URLSearchParams({
+      title: race.name,
+      location: race.location || '',
+      date: race.race_date,
+      event_type: 'race',
+      description: race.homepage_url ? '공식 홈페이지: ' + race.homepage_url : '',
+    })
+    router.push('/calendar/new?' + params.toString())
+  }
 
   const calYear = calMonth.getFullYear()
   const calMonthNum = calMonth.getMonth()
@@ -123,6 +128,12 @@ export default function RacesPage() {
           <p className="text-gray-500 mt-1">{'마라톤/트레일런 대회 정보 · ' + races.length + '개 대회'}</p>
         </div>
         <div className="flex gap-2 items-center flex-wrap">
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="대회명, 지역 검색..."
+            className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#c0392b] text-gray-700 w-40"
+          />
           <select value={distanceFilter} onChange={e => setDistanceFilter(e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#c0392b] text-gray-700">
             <option value="전체">전체 거리</option>
             <option value="풀코스">풀코스</option>
@@ -149,7 +160,7 @@ export default function RacesPage() {
         </div>
       ) : view === 'list' ? (
         <div className="space-y-5">
-          {urgentRaces.length > 0 && (
+          {urgentRaces.length > 0 && !searchQuery && (
             <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
               <p className="text-sm font-semibold text-orange-700 mb-3 flex items-center gap-2">
                 ⏰ 접수 마감 임박
@@ -171,7 +182,12 @@ export default function RacesPage() {
           {Object.keys(grouped).length === 0 ? (
             <div className="card text-center py-16">
               <p className="text-4xl mb-3">🏃</p>
-              <p className="text-gray-400">해당하는 대회가 없습니다</p>
+              <p className="text-gray-400">
+                {searchQuery ? '"' + searchQuery + '" 검색 결과가 없습니다' : '해당하는 대회가 없습니다'}
+              </p>
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="mt-3 text-xs text-[#c0392b] underline">검색 초기화</button>
+              )}
             </div>
           ) : (
             Object.entries(grouped).map(([month, monthRaces]) => (
