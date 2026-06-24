@@ -1,23 +1,22 @@
 import { NextResponse } from 'next/server'
 
+// 1. Vercel이 빈 데이터를 기억하지 못하도록 매번 무조건 최신 데이터를 가져오게 강제합니다.
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const res = await fetch('https://gorunning.kr/races/', {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       },
-      next: { revalidate: 3600 }
+      // 이전의 캐시 설정(revalidate) 삭제
     })
 
     const html = await res.text()
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
     const races: any[] = []
 
-    // <h2> 태그 기준 분리 (대소문자 및 속성 무시)
     const monthBlocks = html.split(/<h2[^>]*>/i)
     for (const block of monthBlocks) {
-      // 띄어쓰기가 달라도 잡을 수 있도록 \s* 사용
       const monthMatch = block.match(/(\d{4})\s*년\s*(\d{1,2})\s*월/)
       if (!monthMatch) continue
       const year = parseInt(monthMatch[1])
@@ -30,16 +29,17 @@ export async function GET() {
         const raceMonth = parseInt(dateMatch[1])
         const raceDay = parseInt(dateMatch[2])
         const raceDate = new Date(year, raceMonth - 1, raceDay)
-        if (raceDate < today) continue
+
+        // 2. 과거 대회 숨김 로직을 임시로 해제했습니다. (데이터가 들어오는지 확인하기 위함)
+        // if (raceDate < new Date()) continue
 
         const rowMatches = dayBlock.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)
         for (const rowMatch of rowMatches) {
           const row = rowMatch[1]
           const cells = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map(m => m[1].replace(/<[^>]+>/g, '').trim())
           
-          if (cells.length < 4) continue // 조건 약간 완화
+          if (cells.length < 4) continue
 
-          // 태그 안에 <span>이나 <b>가 있어도 무시하고 텍스트만 가져오도록 수정
           const nameMatch = row.match(/href\s*=\s*"([^"]+)"[^>]*>([\s\S]*?)<\/a>/i)
           if (!nameMatch) continue
 
@@ -72,10 +72,8 @@ export async function GET() {
       }
     }
 
-    console.log(`크롤링 완료: 총 ${races.length}개의 대회 데이터를 찾았습니다.`)
     return NextResponse.json({ races })
   } catch (error) {
-    console.error('크롤링 에러 발생:', error)
     return NextResponse.json({ error: 'Failed to fetch', races: [] }, { status: 500 })
   }
 }
