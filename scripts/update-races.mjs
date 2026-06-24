@@ -28,7 +28,7 @@ function isValidDate(dateStr) {
   return d instanceof Date && !isNaN(d) && d.toISOString().startsWith(dateStr)
 }
 
-async function getRegDates(no) {
+async function getDetailInfo(no) {
   try {
     const html = await fetchEucKr(`http://www.roadrun.co.kr/schedule/view.php?no=${no}`)
     const $ = cheerio.load(html)
@@ -36,7 +36,9 @@ async function getRegDates(no) {
 
     let regStart = null
     let regEnd = null
+    let homepageUrl = null
 
+    // 접수기간 파싱
     const pattern1 = bodyText.match(/접수기간\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*~\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/)
     if (pattern1) {
       regStart = `${pattern1[1]}-${String(pattern1[2]).padStart(2,'0')}-${String(pattern1[3]).padStart(2,'0')}`
@@ -59,24 +61,36 @@ async function getRegDates(no) {
       }
     }
 
-    // 유효하지 않은 날짜 null 처리
     if (!isValidDate(regStart)) regStart = null
     if (!isValidDate(regEnd)) regEnd = null
 
+    // 홈페이지 URL 파싱
+    $('a').each((_, el) => {
+      const href = $(el).attr('href') || ''
+      const text = $(el).text().trim()
+      if (
+        href.startsWith('http') &&
+        !href.includes('roadrun.co.kr') &&
+        !href.includes('mailto') &&
+        text !== '' &&
+        !homepageUrl
+      ) {
+        homepageUrl = href
+      }
+    })
+
     if (regStart) {
-      console.log(`  ✅ [no=${no}] 접수: ${regStart} ~ ${regEnd}`)
-    } else {
-      console.log(`  ⚠️ [no=${no}] 접수일 파싱 실패`)
+      console.log(`  ✅ [no=${no}] 접수: ${regStart} ~ ${regEnd} | 홈페이지: ${homepageUrl}`)
     }
 
-    return { regStart, regEnd }
+    return { regStart, regEnd, homepageUrl }
   } catch (e) {
-    return { regStart: null, regEnd: null }
+    return { regStart: null, regEnd: null, homepageUrl: null }
   }
 }
 
 async function run() {
-  console.log('🏃 [v6 접수일 포함] 로드런 사이트 탐색 시작...')
+  console.log('🏃 [v7 홈페이지 포함] 로드런 사이트 탐색 시작...')
   try {
     const html = await fetchEucKr('http://www.roadrun.co.kr/schedule/list.php')
     const lines = html.split('\n')
@@ -145,15 +159,16 @@ async function run() {
     }
 
     console.log(`✅ 목록 수집 완료: ${races.length}개`)
-    console.log('🔍 상세 페이지에서 접수일 파싱 시작...')
+    console.log('🔍 상세 페이지 파싱 시작...')
 
     const BATCH = 3
     for (let i = 0; i < races.length; i += BATCH) {
       const batch = races.slice(i, i + BATCH)
       await Promise.all(batch.map(async (race) => {
-        const { regStart, regEnd } = await getRegDates(race.no)
+        const { regStart, regEnd, homepageUrl } = await getDetailInfo(race.no)
         race.reg_start = regStart
         race.reg_end = regEnd
+        race.homepage_url = homepageUrl
       }))
       await new Promise(r => setTimeout(r, 300))
     }
