@@ -38,7 +38,6 @@ async function getDetailInfo(no) {
     let regEnd = null
     let homepageUrl = null
 
-    // 접수기간 파싱
     const pattern1 = bodyText.match(/접수기간\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*~\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/)
     if (pattern1) {
       regStart = `${pattern1[1]}-${String(pattern1[2]).padStart(2,'0')}-${String(pattern1[3]).padStart(2,'0')}`
@@ -64,33 +63,34 @@ async function getDetailInfo(no) {
     if (!isValidDate(regStart)) regStart = null
     if (!isValidDate(regEnd)) regEnd = null
 
-    // 홈페이지 URL 파싱
+    // 홈페이지 URL
     $('a').each((_, el) => {
       const href = $(el).attr('href') || ''
-      const text = $(el).text().trim()
-      if (
-        href.startsWith('http') &&
-        !href.includes('roadrun.co.kr') &&
-        !href.includes('mailto') &&
-        text !== '' &&
-        !homepageUrl
-      ) {
+      if (href.startsWith('http') && !href.includes('roadrun.co.kr') && !href.includes('mailto') && !homepageUrl) {
         homepageUrl = href
       }
     })
 
-    if (regStart) {
-      console.log(`  ✅ [no=${no}] 접수: ${regStart} ~ ${regEnd} | 홈페이지: ${homepageUrl}`)
+    // 상태: reg_end 기준으로 자동 계산
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    let status = '등록중'
+    if (regEnd) {
+      const endDate = new Date(regEnd)
+      if (endDate < today) status = '등록마감'
+      else if (regStart && new Date(regStart) > today) status = '등록예정'
+    } else if (regStart && new Date(regStart) > today) {
+      status = '등록예정'
     }
 
-    return { regStart, regEnd, homepageUrl }
+    return { regStart, regEnd, homepageUrl, status }
   } catch (e) {
-    return { regStart: null, regEnd: null, homepageUrl: null }
+    return { regStart: null, regEnd: null, homepageUrl: null, status: '등록중' }
   }
 }
 
 async function run() {
-  console.log('🏃 [v7 홈페이지 포함] 로드런 사이트 탐색 시작...')
+  console.log('🏃 [v8] 로드런 사이트 탐색 시작...')
   try {
     const html = await fetchEucKr('http://www.roadrun.co.kr/schedule/list.php')
     const lines = html.split('\n')
@@ -138,10 +138,6 @@ async function run() {
           distance = distance.replace(/풀/g, '풀코스')
         }
 
-        let status = '등록중'
-        if (line.includes('마감') || line.includes('종료')) status = '등록마감'
-        else if (line.includes('예정')) status = '등록예정'
-
         races.push({
           no,
           name,
@@ -149,7 +145,7 @@ async function run() {
           distance: distance || '정보 없음',
           region: '',
           location: '',
-          status,
+          status: '등록중',
           race_date: `${intYear}-${month}-${day}`,
           date_label: `${currentMonth}월 ${currentDay}일`,
           day_of_week: ['일', '월', '화', '수', '목', '금', '토'][raceDate.getDay()],
@@ -165,10 +161,12 @@ async function run() {
     for (let i = 0; i < races.length; i += BATCH) {
       const batch = races.slice(i, i + BATCH)
       await Promise.all(batch.map(async (race) => {
-        const { regStart, regEnd, homepageUrl } = await getDetailInfo(race.no)
+        const { regStart, regEnd, homepageUrl, status } = await getDetailInfo(race.no)
         race.reg_start = regStart
         race.reg_end = regEnd
         race.homepage_url = homepageUrl
+        race.status = status
+        console.log(`  ✅ ${race.name}: ${status} (${regStart} ~ ${regEnd})`)
       }))
       await new Promise(r => setTimeout(r, 300))
     }
