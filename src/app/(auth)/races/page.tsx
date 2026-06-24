@@ -122,18 +122,21 @@ export default function RacesPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">대회 일정</h1>
-          <p className="text-gray-500 mt-1">{'마라톤/트레일런 대회 정보 · ' + races.length + '개 대회'}</p>
-        </div>
-        <div className="flex gap-2 items-center flex-wrap">
-          <input
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="대회명, 지역 검색..."
-            className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#c0392b] text-gray-700 w-40"
-          />
+      {/* 헤더 */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">대회 일정</h1>
+        <p className="text-gray-500 mt-1">{'마라톤/트레일런 대회 정보 · ' + races.length + '개 대회'}</p>
+      </div>
+
+      {/* 검색 + 필터 */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <input
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="🔍 대회명, 지역 검색..."
+          className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#c0392b] text-gray-700 w-48"
+        />
+        <div className="flex gap-2 items-center ml-auto">
           <select value={distanceFilter} onChange={e => setDistanceFilter(e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#c0392b] text-gray-700">
             <option value="전체">전체 거리</option>
             <option value="풀코스">풀코스</option>
@@ -148,8 +151,12 @@ export default function RacesPage() {
             <option value="등록마감">등록마감</option>
           </select>
           <div className="flex border border-gray-200 rounded-lg overflow-hidden">
-            <button onClick={() => setView('list')} className={'px-3 py-1.5 text-xs transition-colors ' + (view === 'list' ? 'bg-[#c0392b] text-white' : 'text-gray-500 hover:bg-gray-50')}>목록</button>
-            <button onClick={() => setView('calendar')} className={'px-3 py-1.5 text-xs transition-colors ' + (view === 'calendar' ? 'bg-[#c0392b] text-white' : 'text-gray-500 hover:bg-gray-50')}>캘린더</button>
+            <button onClick={() => setView('list')} className={'px-3 py-1.5 text-xs transition-colors ' + (view === 'list' ? 'bg-[#c0392b] text-white' : 'text-gray-500 hover:bg-gray-50')}>
+              📋 목록
+            </button>
+            <button onClick={() => setView('calendar')} className={'px-3 py-1.5 text-xs transition-colors ' + (view === 'calendar' ? 'bg-[#c0392b] text-white' : 'text-gray-500 hover:bg-gray-50')}>
+              📅 캘린더
+            </button>
           </div>
         </div>
       </div>
@@ -182,12 +189,8 @@ export default function RacesPage() {
           {Object.keys(grouped).length === 0 ? (
             <div className="card text-center py-16">
               <p className="text-4xl mb-3">🏃</p>
-              <p className="text-gray-400">
-                {searchQuery ? '"' + searchQuery + '" 검색 결과가 없습니다' : '해당하는 대회가 없습니다'}
-              </p>
-              {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="mt-3 text-xs text-[#c0392b] underline">검색 초기화</button>
-              )}
+              <p className="text-gray-400">{searchQuery ? '"' + searchQuery + '" 검색 결과가 없습니다' : '해당하는 대회가 없습니다'}</p>
+              {searchQuery && <button onClick={() => setSearchQuery('')} className="mt-3 text-xs text-[#c0392b] underline">검색 초기화</button>}
             </div>
           ) : (
             Object.entries(grouped).map(([month, monthRaces]) => (
