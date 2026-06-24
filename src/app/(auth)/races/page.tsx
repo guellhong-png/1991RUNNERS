@@ -134,7 +134,7 @@ export default function RacesPage() {
                         </p>
                       </div>
                       <div className="flex flex-col gap-2 shrink-0 w-20">
-                        
+                        <a
                           href={race.url}
                           target="_blank"
                           rel="noopener noreferrer"
