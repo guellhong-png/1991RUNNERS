@@ -5,18 +5,14 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   try {
     const targetUrl = 'https://gorunning.kr/races/'
-    // corsproxy.io를 이용해 우회 접속 시도
-    const fetchUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+    // Vercel에서도 무료로 쓸 수 있는 AllOrigins 프록시 사용
+    const fetchUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`
 
-    const res = await fetch(fetchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
-      },
-    })
-
-    const html = await res.text()
+    const res = await fetch(fetchUrl, { cache: 'no-store' })
+    const data = await res.json()
+    
+    // AllOrigins는 html 텍스트를 'contents' 안에 담아서 줍니다.
+    const html = data.contents || ''
     const races: any[] = []
 
     const monthBlocks = html.split(/<h2[^>]*>/i)
@@ -75,11 +71,11 @@ export async function GET() {
 
     if (races.length === 0) {
       races.push({
-        name: `[데이터 없음] 우회 실패 상태코드: ${res.status}`,
+        name: `[데이터 없음] AllOrigins 우회 실패`,
         url: "#",
         distance: "디버깅",
         region: "원인 분석",
-        location: html.substring(0, 80).replace(/</g, '['),
+        location: html ? html.substring(0, 100).replace(/</g, '[') : 'HTML을 못 가져왔습니다.',
         status: "등록중",
         date: "2026-06-24",
         dateLabel: "에러",
