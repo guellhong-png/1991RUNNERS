@@ -1,109 +1,42 @@
 import { NextResponse } from 'next/server'
+// 프로젝트 구조에 따라 supabaseClient 임포트 경로가 다를 수 있습니다. 
+// 보통 @/lib/supabase 나 @/utils/supabase 등을 확인해주세요.
+import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
+// Supabase 클라이언트 초기화 (환경변수 사용)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
 export async function GET() {
   try {
-    const targetUrl = 'https://gorunning.kr/races/'
-    // 원본 HTML을 텍스트 그대로 반환해주는 codetabs 프록시 사용 (마지막 시도!)
-    const fetchUrl = `https://api.codetabs.com/v1/proxy?quest=${targetUrl}`
+    // Supabase 'races' 테이블에서 날짜 오름차순으로 데이터 가져오기
+    const { data: races, error } = await supabase
+      .from('races')
+      .select('*')
+      .order('race_date', { ascending: true })
 
-    const res = await fetch(fetchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      },
-      cache: 'no-store'
-    })
+    if (error) throw error
 
-    // JSON 파싱 없이 바로 텍스트로 읽습니다.
-    const html = await res.text()
-    const races: any[] = []
+    // 프론트엔드가 요구하는 데이터 규격(camelCase 등)에 맞게 변환
+    const formattedRaces = (races || []).map(race => ({
+      name: race.name,
+      url: race.url,
+      distance: race.distance,
+      region: race.region,
+      location: race.location,
+      status: race.status,
+      date: race.race_date,
+      dateLabel: race.date_label,
+      dayOfWeek: race.day_of_week,
+      month: race.month_label,
+    }))
 
-    const monthBlocks = html.split(/<h2[^>]*>/i)
-    for (const block of monthBlocks) {
-      const monthMatch = block.match(/(\d{4})\s*년\s*(\d{1,2})\s*월/)
-      if (!monthMatch) continue
-      const year = parseInt(monthMatch[1])
-      const month = parseInt(monthMatch[2])
-
-      const dayBlocks = block.split(/<h3[^>]*>/i)
-      for (const dayBlock of dayBlocks) {
-        const dateMatch = dayBlock.match(/(\d{1,2})\s*월\s*(\d{1,2})\s*일/)
-        if (!dateMatch) continue
-        const raceMonth = parseInt(dateMatch[1])
-        const raceDay = parseInt(dateMatch[2])
-        const raceDate = new Date(year, raceMonth - 1, raceDay)
-
-        const rowMatches = dayBlock.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)
-        for (const rowMatch of rowMatches) {
-          const row = rowMatch[1]
-          const cells = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map(m => m[1].replace(/<[^>]+>/g, '').trim())
-          
-          if (cells.length < 4) continue
-
-          const nameMatch = row.match(/href\s*=\s*"([^"]+)"[^>]*>([\s\S]*?)<\/a>/i)
-          if (!nameMatch) continue
-
-          const rawName = nameMatch[2].replace(/<[^>]+>/g, '').trim()
-          const url = nameMatch[1].startsWith('http') ? nameMatch[1] : `https://gorunning.kr${nameMatch[1]}`
-          const distance = cells[2] || ''
-          const region = cells[3] || ''
-          const location = cells[4] || ''
-          const statusRaw = cells[cells.length - 1] || ''
-
-          let status = '등록마감'
-          if (statusRaw.includes('등록중')) status = '등록중'
-          else if (statusRaw.includes('예정')) status = '등록예정'
-
-          if (rawName && rawName.length > 1) {
-            races.push({
-              name: rawName,
-              url,
-              distance,
-              region,
-              location,
-              status,
-              date: raceDate.toISOString().split('T')[0],
-              dateLabel: `${raceMonth}월 ${raceDay}일`,
-              dayOfWeek: ['일', '월', '화', '수', '목', '금', '토'][raceDate.getDay()],
-              month: `${year}년 ${String(raceMonth).padStart(2, '0')}월`,
-            })
-          }
-        }
-      }
-    }
-
-    // 데이터가 안 뽑혔을 경우 디버깅 메시지 출력
-    if (races.length === 0) {
-      races.push({
-        name: `[데이터 없음] 모든 프록시 차단됨`,
-        url: "#",
-        distance: "디버깅",
-        region: "원인 분석",
-        location: html.substring(0, 100).replace(/</g, '['),
-        status: "등록마감",
-        date: "2026-06-24",
-        dateLabel: "에러",
-        dayOfWeek: "확인",
-        month: "디버깅 메시지",
-      })
-    }
-
-    return NextResponse.json({ races })
+    return NextResponse.json({ races: formattedRaces })
   } catch (error: any) {
-    return NextResponse.json({ 
-      races: [{
-        name: `[서버 에러] ${error.message}`,
-        url: "#",
-        distance: "에러",
-        region: "Vercel",
-        location: "서버 오류",
-        status: "등록마감",
-        date: "2026-06-24",
-        dateLabel: "에러",
-        dayOfWeek: "확인",
-        month: "디버깅 메시지",
-      }]
-    })
+    console.error('Supabase fetch error:', error)
+    return NextResponse.json({ error: error.message, races: [] }, { status: 500 })
   }
 }
