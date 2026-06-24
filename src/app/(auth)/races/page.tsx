@@ -7,6 +7,7 @@ interface Race {
   id: number
   name: string
   url: string
+  homepage_url: string | null
   distance: string
   region: string
   location: string
@@ -200,7 +201,7 @@ export default function RacesPage() {
                           <div className="flex flex-col items-end gap-1.5 shrink-0">
                             {!isExpired && <span className="text-sm font-bold text-[#c0392b]">{dday}</span>}
                             <div className="flex gap-1.5">
-                              <a href={race.url} target="_blank" rel="noopener noreferrer" className="text-xs py-1.5 px-3 rounded-lg text-center text-white font-medium whitespace-nowrap" style={{ background: '#c0392b' }}>접수하기</a>
+                              <a href={race.homepage_url || race.url} target="_blank" rel="noopener noreferrer" className="text-xs py-1.5 px-3 rounded-lg text-center text-white font-medium whitespace-nowrap" style={{ background: '#c0392b' }}>접수하기</a>
                               <button onClick={() => handleCalendarRegister(race)} disabled={isExpired} className="text-xs py-1.5 px-3 rounded-lg text-center font-medium border whitespace-nowrap transition-colors disabled:opacity-40 disabled:cursor-not-allowed" style={{ color: isExpired ? '#999' : '#c0392b', borderColor: isExpired ? '#ddd' : '#c0392b' }}>캘린더 등록</button>
                             </div>
                           </div>
