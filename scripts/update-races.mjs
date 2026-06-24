@@ -12,7 +12,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 async function run() {
-  console.log('🏃‍♂️ 블로그와 동일한 태그 분석 기법으로 로드런 파싱 시작...');
+  console.log('🏃‍♂️ [그물망 모드] 로드런 사이트 정밀 탐색을 시작합니다...');
   try {
     const res = await fetch('http://www.roadrun.co.kr/schedule/list.php', {
       headers: {
@@ -24,79 +24,111 @@ async function run() {
     const decoder = new TextDecoder('euc-kr');
     const html = decoder.decode(buffer);
     
-    // 블로그에서 쓴 BeautifulSoup처럼 진짜 태그 묶음으로 로드합니다.
+    // [CCTV 로그] 사이트가 올바르게 긁혀오는지 확인용
+    console.log('=== [CCTV] 가져온 HTML 상단 샘플 ===');
+    console.log(html.slice(0, 400));
+    console.log('====================================');
+
     const $ = cheerio.load(html);
     const races = [];
 
-    // 모든 테이블 행(tr)을 돌며 데이터를 정밀하게 발라냅니다.
+    const totalTr = $('tr').length;
+    console.log(`발견된 전체 테이블 행(tr) 개수: ${totalTr}개`);
+
+    // 이제 칸 번호 따지지 않고 그물망식으로 샅샅이 뒤집니다.
     $('tr').each((i, el) => {
-      const tds = $(el).find('td');
-      if (tds.length < 5) return; // 칸이 부족한 행은 패스
+      const rowHtml = $(el).html() || '';
+      const rowText = $(el).text().replace(/\s+/g, ' ').trim();
+      
+      // 행 내부에 상세페이지 링크(view.php)가 없다면 마라톤 정보가 아니므로 패스
+      if (!rowHtml.includes('view.php')) return;
 
-      // 첫 번째 칸에서 날짜(YYYY-MM-DD 또는 YY-MM-DD 형태 등)를 찾습니다.
-      const dateText = $(tds[0]).text().replace(/\s/g, '').replace(/\./g, '-');
-      const dateMatch = dateText.match(/(\d{4}-\d{2}-\d{2})/);
-      if (!dateMatch) return;
-
-      const raceDateStr = dateMatch[1];
-      const [year, month, day] = raceDateStr.split('-');
-      const raceDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-
-      // 두 번째 칸에서 대회명과 링크 추출
-      const nameAnchor = $(tds[1]).find('a');
+      // 대회 이름과 링크(URL) 추출
+      const nameAnchor = $(el).find('a[href*="view.php"]').first();
       if (nameAnchor.length === 0) return;
 
+      const name = nameAnchor.text().trim();
       let rawUrl = nameAnchor.attr('href') || '#';
       const url = rawUrl.startsWith('http') ? rawUrl : `http://www.roadrun.co.kr/schedule/${rawUrl}`;
-      const name = nameAnchor.text().trim();
 
-      // 나머지 정보 가공
-      const region = $(tds[2]).text().trim() || '전국';
-      const location = region;
-      const distance = $(tds[3]).text().trim() || '풀, 하프, 10km';
-      
+      if (!name || name.length < 2) return;
+
+      // [그물망 날짜 파싱] 행 전체 텍스트에서 날짜 패턴 유연하게 검색
+      let raceDateStr = '2026-01-01';
+      let year = '2026', month = '01', day = '01';
+
+      // 1순위: 2026-03-15 또는 2026.03.15 형태 검색
+      const fullDateMatch = rowText.match(/(\d{4})[-.](\d{2})[-.](\d{2})/);
+      // 2순위: 연도 없이 03/15 또는 03-15 형태 검색
+      const shortDateMatch = rowText.match(/(\d{2})[-./](\d{2})/);
+
+      if (fullDateMatch) {
+        year = fullDateMatch[1];
+        month = fullDateMatch[2];
+        day = fullDateMatch[3];
+        raceDateStr = `${year}-${month}-${day}`;
+      } else if (shortDateMatch) {
+        month = shortDateMatch[1];
+        day = shortDateMatch[2];
+        raceDateStr = `2026-${month}-${day}`; // 연도 없으면 2026년으로 강제 배정
+      } else {
+        return; // 날짜 형식이 아예 없는 행은 버립니다.
+      }
+
+      const raceDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+      // 지역, 코스 정보 추출 (td들 중에서 대회명 제외한 텍스트 수집)
+      const tds = $(el).find('td');
+      let details = [];
+      tds.each((_, td) => {
+        const txt = $(td).text().trim();
+        if (txt && txt !== name && !txt.match(/\d{2}[-./]\d{2}/)) {
+          details.push(txt);
+        }
+      });
+
+      const region = details[0] || '전국';
+      const distance = details[1] || '풀코스, 하프, 10km';
+
       // 접수 상태 판단
-      const statusText = $(tds[4]).text() || '';
       let status = '등록중';
-      if (statusText.includes('마감') || statusText.includes('종료')) {
+      if (rowText.includes('마감') || rowText.includes('종료')) {
         status = '등록마감';
-      } else if (statusText.includes('예정')) {
+      } else if (rowText.includes('예정')) {
         status = '등록예정';
       }
 
-      if (name && name.length > 1) {
-        races.push({
-          name,
-          url,
-          distance,
-          region,
-          location,
-          status,
-          race_date: raceDateStr,
-          date_label: `${parseInt(month)}월 ${parseInt(day)}일`,
-          day_of_week: ['일', '월', '화', '수', '목', '금', '토'][raceDate.getDay()] || '일',
-          month_label: `${year}년 ${month}월`,
-        });
-      }
+      races.push({
+        name,
+        url,
+        distance,
+        region,
+        location: region,
+        status,
+        race_date: raceDateStr,
+        date_label: `${parseInt(month)}월 ${parseInt(day)}일`,
+        day_of_week: ['일', '월', '화', '수', '목', '금', '토'][raceDate.getDay()] || '일',
+        month_label: `${year}년 ${month.padStart(2, '0')}월`,
+      });
     });
 
-    console.log(`✅ 대성공! 총 ${races.length}개의 실제 마라톤 대회를 찾아내어 파싱했습니다.`);
+    console.log(`✅ [결과] 최종 수집된 실제 마라톤 대회: 총 ${races.length}개`);
 
     if (races.length > 0) {
-      console.log('기존 데이터를 완전히 리셋하는 중...');
+      console.log('기존 데이터를 비우는 중...');
       await supabase.from('races').delete().neq('id', 0)
 
-      console.log('최신 데이터를 Supabase DB에 안전하게 업로드 중...');
+      console.log('최신 마라톤 데이터를 Supabase DB에 꽂아 넣는 중...');
       const { error: insertError } = await supabase.from('races').insert(races)
       if (insertError) throw insertError
 
-      console.log('🎉 모든 데이터가 정상 조율 및 연동 완료되었습니다!');
+      console.log('🎉 [완료] 데이터가 정상적으로 수집되어 연동되었습니다!');
     } else {
-      console.log('❌ 태그 분석에 실패했거나 일치하는 데이터 포맷이 없습니다.');
+      console.log('❌ 테이블 행은 찾았으나 조건에 맞는 마라톤 데이터를 추출하지 못했습니다.');
     }
 
   } catch (e) {
-    console.error('로봇 치명적 크래시:', e)
+    console.error('로봇 작동 오류:', e)
     process.exit(1)
   }
 }
