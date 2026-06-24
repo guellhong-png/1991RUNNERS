@@ -28,33 +28,48 @@ async function getRegDates(no) {
     const $ = cheerio.load(html)
     const bodyText = $('body').text().replace(/\s+/g, ' ').trim()
 
-    // 디버그: 첫 300자 출력
-    console.log(`[no=${no}] ${bodyText.substring(0, 300)}`)
-
     let regStart = null
     let regEnd = null
 
-    const regPeriodMatch = bodyText.match(/접수\s*기간[^\d]*(\d{4})[.\-\/](\d{2})[.\-\/](\d{2})[^~\d]*[~\-][^~\d]*(\d{4})[.\-\/](\d{2})[.\-\/](\d{2})/)
-    if (regPeriodMatch) {
-      regStart = `${regPeriodMatch[1]}-${regPeriodMatch[2]}-${regPeriodMatch[3]}`
-      regEnd = `${regPeriodMatch[4]}-${regPeriodMatch[5]}-${regPeriodMatch[6]}`
-    } else {
-      const dateMatches = [...bodyText.matchAll(/(\d{4})[.\-](\d{2})[.\-](\d{2})/g)]
-      if (dateMatches.length >= 2) {
-        regStart = `${dateMatches[0][1]}-${dateMatches[0][2]}-${dateMatches[0][3]}`
-        regEnd = `${dateMatches[1][1]}-${dateMatches[1][2]}-${dateMatches[1][3]}`
+    // 패턴 1: "접수기간 2026년5월13일~2026년6월17일"
+    const pattern1 = bodyText.match(/접수기간\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*~\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/)
+    if (pattern1) {
+      regStart = `${pattern1[1]}-${String(pattern1[2]).padStart(2,'0')}-${String(pattern1[3]).padStart(2,'0')}`
+      regEnd = `${pattern1[4]}-${String(pattern1[5]).padStart(2,'0')}-${String(pattern1[6]).padStart(2,'0')}`
+    }
+
+    // 패턴 2: "접수기간 2026.05.13~2026.06.17"
+    if (!regStart) {
+      const pattern2 = bodyText.match(/접수기간\s*(\d{4})[.\-](\d{2})[.\-](\d{2})\s*~\s*(\d{4})[.\-](\d{2})[.\-](\d{2})/)
+      if (pattern2) {
+        regStart = `${pattern2[1]}-${pattern2[2]}-${pattern2[3]}`
+        regEnd = `${pattern2[4]}-${pattern2[5]}-${pattern2[6]}`
       }
+    }
+
+    // 패턴 3: "접수기간 2026년5월13일~6월17일" (연도 한번만)
+    if (!regStart) {
+      const pattern3 = bodyText.match(/접수기간\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*~\s*(\d{1,2})월\s*(\d{1,2})일/)
+      if (pattern3) {
+        regStart = `${pattern3[1]}-${String(pattern3[2]).padStart(2,'0')}-${String(pattern3[3]).padStart(2,'0')}`
+        regEnd = `${pattern3[1]}-${String(pattern3[4]).padStart(2,'0')}-${String(pattern3[5]).padStart(2,'0')}`
+      }
+    }
+
+    if (regStart) {
+      console.log(`  ✅ [no=${no}] 접수: ${regStart} ~ ${regEnd}`)
+    } else {
+      console.log(`  ⚠️ [no=${no}] 접수일 파싱 실패`)
     }
 
     return { regStart, regEnd }
   } catch (e) {
-    console.log(`[no=${no}] 에러: ${e.message}`)
     return { regStart: null, regEnd: null }
   }
 }
 
 async function run() {
-  console.log('🏃 [v4 접수일 포함] 로드런 사이트 탐색 시작...')
+  console.log('🏃 [v5 접수일 포함] 로드런 사이트 탐색 시작...')
   try {
     const html = await fetchEucKr('http://www.roadrun.co.kr/schedule/list.php')
     const lines = html.split('\n')
@@ -133,7 +148,7 @@ async function run() {
         race.reg_start = regStart
         race.reg_end = regEnd
       }))
-      await new Promise(r => setTimeout(r, 500))
+      await new Promise(r => setTimeout(r, 300))
     }
 
     const toInsert = races.map(({ no, ...rest }) => rest)
