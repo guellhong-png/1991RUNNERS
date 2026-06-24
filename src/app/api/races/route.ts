@@ -5,14 +5,18 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   try {
     const targetUrl = 'https://gorunning.kr/races/'
-    // Vercel에서도 무료로 쓸 수 있는 AllOrigins 프록시 사용
-    const fetchUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`
+    // 원본 HTML을 텍스트 그대로 반환해주는 codetabs 프록시 사용 (마지막 시도!)
+    const fetchUrl = `https://api.codetabs.com/v1/proxy?quest=${targetUrl}`
 
-    const res = await fetch(fetchUrl, { cache: 'no-store' })
-    const data = await res.json()
-    
-    // AllOrigins는 html 텍스트를 'contents' 안에 담아서 줍니다.
-    const html = data.contents || ''
+    const res = await fetch(fetchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+      cache: 'no-store'
+    })
+
+    // JSON 파싱 없이 바로 텍스트로 읽습니다.
+    const html = await res.text()
     const races: any[] = []
 
     const monthBlocks = html.split(/<h2[^>]*>/i)
@@ -69,14 +73,15 @@ export async function GET() {
       }
     }
 
+    // 데이터가 안 뽑혔을 경우 디버깅 메시지 출력
     if (races.length === 0) {
       races.push({
-        name: `[데이터 없음] AllOrigins 우회 실패`,
+        name: `[데이터 없음] 모든 프록시 차단됨`,
         url: "#",
         distance: "디버깅",
         region: "원인 분석",
-        location: html ? html.substring(0, 100).replace(/</g, '[') : 'HTML을 못 가져왔습니다.',
-        status: "등록중",
+        location: html.substring(0, 100).replace(/</g, '['),
+        status: "등록마감",
         date: "2026-06-24",
         dateLabel: "에러",
         dayOfWeek: "확인",
@@ -92,7 +97,7 @@ export async function GET() {
         url: "#",
         distance: "에러",
         region: "Vercel",
-        location: "서버 내부 오류",
+        location: "서버 오류",
         status: "등록마감",
         date: "2026-06-24",
         dateLabel: "에러",
