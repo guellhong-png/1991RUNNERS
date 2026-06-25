@@ -70,21 +70,21 @@ export default function ArchivePage() {
   }
 
   const handleHistorySubmit = async () => {
-  if (!historyForm.year || !historyForm.content) return
-  const { error } = await supabase.from('histories').insert({
-    year: historyForm.year,
-    content: historyForm.content,
-    image_url: historyForm.image_url || null,
-  })
-  if (error) {
-    alert('저장 실패: ' + error.message)
-    return
+    if (!historyForm.year || !historyForm.content) return
+    const { error } = await supabase.from('histories').insert({
+      year: historyForm.year,
+      content: historyForm.content,
+      image_url: historyForm.image_url || null,
+    })
+    if (error) {
+      alert('저장 실패: ' + error.message)
+      return
+    }
+    const { data } = await supabase.from('histories').select('*').order('year', { ascending: false })
+    setHistories(data ?? [])
+    setHistoryForm({ year: '', content: '', image_url: '' })
+    setShowHistoryForm(false)
   }
-  const { data } = await supabase.from('histories').select('*').order('year', { ascending: false })
-  setHistories(data ?? [])
-  setHistoryForm({ year: '', content: '', image_url: '' })
-  setShowHistoryForm(false)
-}
 
   const handleHistoryDelete = async (id: string) => {
     if (!confirm('삭제할까요?')) return
@@ -92,7 +92,6 @@ export default function ArchivePage() {
     setHistories(histories.filter(h => h.id !== id))
   }
 
-  // 연도별 그룹핑
   const groupedHistories = histories.reduce((acc, h) => {
     if (!acc[h.year]) acc[h.year] = []
     acc[h.year].push(h)
@@ -106,62 +105,7 @@ export default function ArchivePage() {
         <p className="text-gray-500 mt-1">로고, 히스토리 등 자료를 확인하세요</p>
       </div>
 
-      {/* 로고 모음 */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <Image size={20} className="text-[#e94560]" />뛰꼬양 로고 모음
-          </h2>
-          {isAdmin && (
-            <button onClick={() => setShowLogoForm(true)} className="flex items-center gap-1 text-sm text-[#e94560] hover:underline">
-              <Plus size={16} />추가
-            </button>
-          )}
-        </div>
-
-        {showLogoForm && (
-          <div className="card mb-4 space-y-3">
-            <input
-              placeholder="로고 이름"
-              value={logoTitle}
-              onChange={e => setLogoTitle(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#c0392b]"
-            />
-            <input type="file" accept="image/*" ref={logoFileRef} className="text-sm text-gray-600" />
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowLogoForm(false)} className="text-sm text-gray-400 px-3 py-1.5">취소</button>
-              <button onClick={handleLogoSubmit} disabled={logoUploading} className="text-sm bg-[#c0392b] text-white px-4 py-1.5 rounded-lg disabled:opacity-50">
-                {logoUploading ? '업로드 중...' : '저장'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="card">
-          {logos.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">등록된 로고가 없습니다</p>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {logos.map(logo => (
-                <div key={logo.id} className="relative group">
-                  <img src={logo.image_url} alt={logo.title} className="w-full aspect-square object-contain bg-gray-50 rounded-lg border border-gray-100 p-2" />
-                  <p className="text-xs text-center text-gray-600 mt-1 truncate">{logo.title}</p>
-                  {isAdmin && (
-                    <button
-                      onClick={() => handleLogoDelete(logo.id, logo.image_url)}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 히스토리 */}
+      {/* 히스토리 (위로 이동) */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
@@ -238,6 +182,61 @@ export default function ArchivePage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 로고 모음 (아래로 이동) */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <Image size={20} className="text-[#e94560]" />뛰꼬양 로고 모음
+          </h2>
+          {isAdmin && (
+            <button onClick={() => setShowLogoForm(true)} className="flex items-center gap-1 text-sm text-[#e94560] hover:underline">
+              <Plus size={16} />추가
+            </button>
+          )}
+        </div>
+
+        {showLogoForm && (
+          <div className="card mb-4 space-y-3">
+            <input
+              placeholder="로고 이름"
+              value={logoTitle}
+              onChange={e => setLogoTitle(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#c0392b]"
+            />
+            <input type="file" accept="image/*" ref={logoFileRef} className="text-sm text-gray-600" />
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setShowLogoForm(false)} className="text-sm text-gray-400 px-3 py-1.5">취소</button>
+              <button onClick={handleLogoSubmit} disabled={logoUploading} className="text-sm bg-[#c0392b] text-white px-4 py-1.5 rounded-lg disabled:opacity-50">
+                {logoUploading ? '업로드 중...' : '저장'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="card">
+          {logos.length === 0 ? (
+            <p className="text-gray-400 text-center py-8">등록된 로고가 없습니다</p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {logos.map(logo => (
+                <div key={logo.id} className="relative group">
+                  <img src={logo.image_url} alt={logo.title} className="w-full aspect-square object-contain bg-gray-50 rounded-lg border border-gray-100 p-2" />
+                  <p className="text-xs text-center text-gray-600 mt-1 truncate">{logo.title}</p>
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleLogoDelete(logo.id, logo.image_url)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
