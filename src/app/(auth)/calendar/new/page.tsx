@@ -136,13 +136,15 @@ export default function NewEventPage() {
     if (!createdEvent) return
     const url = `https://1991-runners.vercel.app/calendar/${createdEvent.id}`
     const text = `[1991RUNNERS] ${createdEvent.title}\n${form.location ? form.location + ' · ' : ''}${form.event_date} ${form.event_time}\n\n모임 보러가기: ${url}`
-    if (navigator.share) {
-      navigator.share({ title: `[1991RUNNERS] ${createdEvent.title}`, text, url })
-    } else {
-      navigator.clipboard.writeText(text).then(() => {
-        alert('링크가 복사되었습니다! 카카오톡에 붙여넣기 해주세요.')
-      })
-    }
+
+    const kakaoScheme = `kakaolink://send?text=${encodeURIComponent(text)}`
+    window.location.href = kakaoScheme
+
+    setTimeout(() => {
+      if (navigator.share) {
+        navigator.share({ title: `[1991RUNNERS] ${createdEvent.title}`, text, url })
+      }
+    }, 2000)
   }
 
   const handleSkipShare = () => {
