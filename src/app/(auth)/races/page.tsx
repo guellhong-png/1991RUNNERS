@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -33,6 +33,9 @@ export default function RacesPage() {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
   })
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const [popoverDay, setPopoverDay] = useState<number | null>(null)
+  const popoverRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     supabase
@@ -43,6 +46,17 @@ export default function RacesPage() {
         setRaces(data ?? [])
         setLoading(false)
       })
+  }, [])
+
+  // 팝오버 바깥 클릭 닫기
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setPopoverDay(null)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
   }, [])
 
   const today = new Date()
@@ -105,13 +119,19 @@ export default function RacesPage() {
 
   const getCalEvents = (day: number) => {
     const dateStr = calYear + '-' + String(calMonthNum + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0')
-    const events: { name: string; type: 'reg_start' | 'reg_end' | 'race' }[] = []
+    const events: { name: string; type: 'reg_start' | 'reg_end' | 'race'; race: Race }[] = []
     races.forEach(r => {
-      if (r.reg_start === dateStr) events.push({ name: r.name, type: 'reg_start' })
-      if (r.reg_end === dateStr) events.push({ name: r.name, type: 'reg_end' })
-      if (r.race_date === dateStr) events.push({ name: r.name, type: 'race' })
+      if (r.reg_start === dateStr) events.push({ name: r.name, type: 'reg_start', race: r })
+      if (r.reg_end === dateStr) events.push({ name: r.name, type: 'reg_end', race: r })
+      if (r.race_date === dateStr) events.push({ name: r.name, type: 'race', race: r })
     })
     return events
+  }
+
+  const dotColor = (type: string) => {
+    if (type === 'reg_start') return 'bg-green-500'
+    if (type === 'reg_end') return 'bg-red-400'
+    return 'bg-blue-400'
   }
 
   const calEventStyle = (type: string) => {
@@ -119,6 +139,14 @@ export default function RacesPage() {
     if (type === 'reg_end') return 'bg-red-100 text-red-800'
     return 'bg-blue-100 text-blue-800'
   }
+
+  const typeLabel = (type: string) => {
+    if (type === 'reg_start') return '접수 시작'
+    if (type === 'reg_end') return '접수 마감'
+    return '대회 개최'
+  }
+
+  const selectedEvents = selectedDay ? getCalEvents(selectedDay) : []
 
   return (
     <div className="space-y-5">
@@ -237,37 +265,130 @@ export default function RacesPage() {
         </div>
       ) : (
         <div className="card">
+          {/* 월 네비게이션 */}
           <div className="flex items-center justify-between mb-4">
-            <button onClick={() => setCalMonth(new Date(calYear, calMonthNum - 1, 1))} className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600">← 이전</button>
+            <button onClick={() => { setCalMonth(new Date(calYear, calMonthNum - 1, 1)); setSelectedDay(null) }} className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600">← 이전</button>
             <span className="font-semibold text-gray-900">{calYear + '년 ' + (calMonthNum + 1) + '월'}</span>
-            <button onClick={() => setCalMonth(new Date(calYear, calMonthNum + 1, 1))} className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600">다음 →</button>
+            <button onClick={() => { setCalMonth(new Date(calYear, calMonthNum + 1, 1)); setSelectedDay(null) }} className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600">다음 →</button>
           </div>
-          <div className="grid grid-cols-7 gap-px bg-gray-100 rounded-lg overflow-hidden text-xs">
+
+          {/* 요일 헤더 */}
+          <div className="grid grid-cols-7 mb-1">
             {['일','월','화','수','목','금','토'].map(d => (
-              <div key={d} className="bg-gray-50 text-center py-2 font-medium text-gray-500">{d}</div>
+              <div key={d} className="text-center py-2 text-xs font-medium text-gray-400">{d}</div>
             ))}
-            {Array.from({ length: firstDay }).map((_, i) => (
-              <div key={'e'+i} className="bg-gray-50 min-h-[70px]" />
-            ))}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day = i + 1
-              const isToday = calYear === today.getFullYear() && calMonthNum === today.getMonth() && day === today.getDate()
-              const events = getCalEvents(day)
-              return (
-                <div key={day} className={'bg-white min-h-[70px] p-1 ' + (isToday ? 'bg-red-50' : '')}>
-                  <p className={'text-xs mb-1 ' + (isToday ? 'text-[#c0392b] font-bold' : 'text-gray-400')}>{day}</p>
-                  {events.slice(0, 3).map((ev, j) => (
-                    <div key={j} className={'text-[9px] px-1 py-0.5 rounded mb-0.5 truncate ' + calEventStyle(ev.type)}>{ev.name}</div>
-                  ))}
-                  {events.length > 3 && <p className="text-[9px] text-gray-400">+{events.length - 3}</p>}
-                </div>
-              )
-            })}
           </div>
+
+          {/* ─── 모바일: 도트 방식 ─── */}
+          <div className="md:hidden">
+            <div className="grid grid-cols-7 gap-px">
+              {Array.from({ length: firstDay }).map((_, i) => <div key={'e'+i} className="min-h-[52px]" />)}
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const day = i + 1
+                const isToday = calYear === today.getFullYear() && calMonthNum === today.getMonth() && day === today.getDate()
+                const isSelected = selectedDay === day
+                const events = getCalEvents(day)
+                const dotTypes = [...new Set(events.map(e => e.type))]
+                return (
+                  <div
+                    key={day}
+                    onClick={() => setSelectedDay(isSelected ? null : day)}
+                    className={'min-h-[52px] flex flex-col items-center pt-1.5 pb-1 rounded-lg cursor-pointer transition-colors ' + (isSelected ? 'bg-gray-100' : 'hover:bg-gray-50')}
+                  >
+                    <span className={
+                      'text-xs w-6 h-6 flex items-center justify-center rounded-full font-medium ' +
+                      (isToday ? 'bg-[#c0392b] text-white' : isSelected ? 'text-[#c0392b] font-bold' : 'text-gray-700')
+                    }>{day}</span>
+                    <div className="flex gap-0.5 mt-1 flex-wrap justify-center">
+                      {dotTypes.slice(0, 3).map((type, j) => (
+                        <div key={j} className={'w-1.5 h-1.5 rounded-full ' + dotColor(type)} />
+                      ))}
+                      {dotTypes.length > 3 && <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* 선택된 날짜 목록 */}
+            {selectedDay && (
+              <div className="mt-3 border-t border-gray-100 pt-3">
+                <p className="text-sm font-semibold text-gray-700 mb-2">
+                  {(calMonthNum + 1) + '월 ' + selectedDay + '일 · ' + selectedEvents.length + '개'}
+                </p>
+                {selectedEvents.length === 0 ? (
+                  <p className="text-xs text-gray-400 py-2">일정이 없습니다</p>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedEvents.map((ev, j) => (
+                      <div key={j} className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+                        <span className={'text-xs px-2 py-0.5 rounded-full shrink-0 ' + calEventStyle(ev.type)}>{typeLabel(ev.type)}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-900 line-clamp-2">{ev.name}</p>
+                          {ev.race.reg_end && <p className="text-xs text-red-400 mt-0.5">{'마감 ' + ev.race.reg_end}</p>}
+                        </div>
+                        <a href={ev.race.homepage_url || ev.race.url} target="_blank" rel="noopener noreferrer"
+                          className="text-xs px-2 py-1 rounded bg-[#c0392b] text-white shrink-0">접수</a>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ─── PC: 텍스트 + 팝오버 방식 ─── */}
+          <div className="hidden md:block">
+            <div className="grid grid-cols-7 gap-px bg-gray-100 rounded-lg overflow-hidden">
+              {Array.from({ length: firstDay }).map((_, i) => <div key={'e'+i} className="bg-gray-50 min-h-[90px]" />)}
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const day = i + 1
+                const isToday = calYear === today.getFullYear() && calMonthNum === today.getMonth() && day === today.getDate()
+                const events = getCalEvents(day)
+                const isPopover = popoverDay === day
+                return (
+                  <div key={day} className={'bg-white min-h-[90px] p-1.5 relative ' + (isToday ? 'bg-red-50' : '')}>
+                    <p className={'text-xs mb-1 w-5 h-5 flex items-center justify-center rounded-full ' +
+                      (isToday ? 'bg-[#c0392b] text-white font-bold' : 'text-gray-400')}>{day}</p>
+                    {events.slice(0, 3).map((ev, j) => (
+                      <div key={j} className={'text-[10px] px-1 py-0.5 rounded mb-0.5 truncate ' + calEventStyle(ev.type)}>{ev.name}</div>
+                    ))}
+                    {events.length > 3 && (
+                      <div className="relative" ref={isPopover ? popoverRef : undefined}>
+                        <button
+                          onClick={() => setPopoverDay(isPopover ? null : day)}
+                          className="text-[10px] text-[#c0392b] font-medium hover:underline"
+                        >+{events.length - 3}개 더보기</button>
+                        {isPopover && (
+                          <div className="absolute z-30 top-5 left-0 bg-white border border-gray-200 rounded-xl shadow-xl p-3 w-64">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-xs font-semibold text-gray-700">{(calMonthNum + 1) + '월 ' + day + '일 전체 일정'}</p>
+                              <button onClick={() => setPopoverDay(null)} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                            </div>
+                            <div className="space-y-1.5 max-h-60 overflow-y-auto">
+                              {events.map((ev, j) => (
+                                <div key={j} className="flex items-start gap-2">
+                                  <span className={'text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ' + calEventStyle(ev.type)}>{typeLabel(ev.type)}</span>
+                                  <a href={ev.race.homepage_url || ev.race.url} target="_blank" rel="noopener noreferrer"
+                                    className="text-[10px] text-gray-700 hover:text-[#c0392b] hover:underline line-clamp-2">{ev.name}</a>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 범례 */}
           <div className="flex gap-4 mt-3 flex-wrap">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500"><div className="w-3 h-3 rounded bg-green-100 border border-green-300"></div>접수 시작</div>
-            <div className="flex items-center gap-1.5 text-xs text-gray-500"><div className="w-3 h-3 rounded bg-red-100 border border-red-300"></div>접수 마감</div>
-            <div className="flex items-center gap-1.5 text-xs text-gray-500"><div className="w-3 h-3 rounded bg-blue-100 border border-blue-300"></div>대회 개최일</div>
+            <div className="flex items-center gap-1.5 text-xs text-gray-500"><div className="w-3 h-3 rounded-full bg-green-500"></div>접수 시작</div>
+            <div className="flex items-center gap-1.5 text-xs text-gray-500"><div className="w-3 h-3 rounded-full bg-red-400"></div>접수 마감</div>
+            <div className="flex items-center gap-1.5 text-xs text-gray-500"><div className="w-3 h-3 rounded-full bg-blue-400"></div>대회 개최일</div>
           </div>
         </div>
       )}
