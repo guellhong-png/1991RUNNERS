@@ -4,7 +4,7 @@ import { ko } from 'date-fns/locale'
 import Link from 'next/link'
 import { Plus, MapPin, Clock, Users, Calendar } from 'lucide-react'
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/types'
-import CalendarNav from './CalendarNav'\
+import CalendarNav from './CalendarNav'
 import CalendarBadgeClear from './CalendarBadgeClear'
 
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string; year?: string }> }) {
