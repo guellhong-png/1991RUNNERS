@@ -70,13 +70,21 @@ export default function ArchivePage() {
   }
 
   const handleHistorySubmit = async () => {
-    if (!historyForm.year || !historyForm.content) return
-    await supabase.from('histories').insert(historyForm)
-    const { data } = await supabase.from('histories').select('*').order('year', { ascending: false })
-    setHistories(data ?? [])
-    setHistoryForm({ year: '', content: '', image_url: '' })
-    setShowHistoryForm(false)
+  if (!historyForm.year || !historyForm.content) return
+  const { error } = await supabase.from('histories').insert({
+    year: historyForm.year,
+    content: historyForm.content,
+    image_url: historyForm.image_url || null,
+  })
+  if (error) {
+    alert('저장 실패: ' + error.message)
+    return
   }
+  const { data } = await supabase.from('histories').select('*').order('year', { ascending: false })
+  setHistories(data ?? [])
+  setHistoryForm({ year: '', content: '', image_url: '' })
+  setShowHistoryForm(false)
+}
 
   const handleHistoryDelete = async (id: string) => {
     if (!confirm('삭제할까요?')) return
