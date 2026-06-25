@@ -167,7 +167,7 @@ export default function ArchivePage() {
                           <div className="flex-1">
                             <p className="text-gray-700 text-sm">{item.content}</p>
                             {item.image_url && (
-                              <img src={item.image_url} alt="" className="mt-2 rounded-lg max-h-48 object-cover" />
+                              <img src={item.image_url} alt="" className="mt-2 rounded-lg w-full object-contain" />
                             )}
                           </div>
                         </div>
