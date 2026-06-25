@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, Pencil, X, Check } from 'lucide-react'
+import { TrendingUp, TrendingDown, ChevronDown, ChevronUp, Pencil, X, Check, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { FINANCE_CATEGORIES } from '@/types'
@@ -58,13 +58,19 @@ export default function FinanceList({ finances, isAdmin }: { finances: Finance[]
     setSaving(false)
   }
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('정말 삭제할까요?')) return
+    const { error } = await supabase.from('finances').delete().eq('id', id)
+    if (error) alert('삭제 실패: ' + error.message)
+    else router.refresh()
+  }
+
   return (
     <>
       <div className="divide-y divide-gray-50">
         {finances.map((item) => (
           <div key={item.id}>
             {editingId === item.id ? (
-              /* 수정 폼 */
               <div className="px-6 py-4 bg-gray-50 space-y-3">
                 <div className="flex gap-3">
                   {(['income', 'expense'] as const).map((t) => (
@@ -117,7 +123,6 @@ export default function FinanceList({ finances, isAdmin }: { finances: Finance[]
                 </div>
               </div>
             ) : (
-              /* 일반 행 */
               <div>
                 <div
                   className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer"
@@ -144,12 +149,20 @@ export default function FinanceList({ finances, isAdmin }: { finances: Finance[]
                       {item.balance_after != null && <p className="text-xs text-gray-400">잔액 {item.balance_after.toLocaleString()}원</p>}
                     </div>
                     {isAdmin && (
-                      <button
-                        onClick={e => { e.stopPropagation(); handleEdit(item) }}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                      >
-                        <Pencil size={14} />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={e => { e.stopPropagation(); handleEdit(item) }}
+                          className="text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={e => { e.stopPropagation(); handleDelete(item.id) }}
+                          className="text-red-300 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     )}
                     {item.image_url && (
                       <div className="text-gray-400">
@@ -159,7 +172,6 @@ export default function FinanceList({ finances, isAdmin }: { finances: Finance[]
                   </div>
                 </div>
 
-                {/* 사진 펼치기 */}
                 {item.image_url && expandedId === item.id && (
                   <div className="px-6 pb-4">
                     <img
@@ -176,7 +188,6 @@ export default function FinanceList({ finances, isAdmin }: { finances: Finance[]
         ))}
       </div>
 
-      {/* 라이트박스 */}
       {lightboxUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setLightboxUrl(null)}>
           <button className="absolute top-4 right-4 text-white hover:text-gray-300" onClick={() => setLightboxUrl(null)}>
