@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -34,8 +34,6 @@ export default function RacesPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1)
   })
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
-  const [popoverDay, setPopoverDay] = useState<number | null>(null)
-  const popoverRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     supabase
@@ -46,17 +44,6 @@ export default function RacesPage() {
         setRaces(data ?? [])
         setLoading(false)
       })
-  }, [])
-
-  // 팝오버 바깥 클릭 닫기
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setPopoverDay(null)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
   }, [])
 
   const today = new Date()
@@ -310,7 +297,7 @@ export default function RacesPage() {
               })}
             </div>
 
-            {/* 선택된 날짜 목록 */}
+            {/* 모바일 선택된 날짜 목록 */}
             {selectedDay && (
               <div className="mt-3 border-t border-gray-100 pt-3">
                 <p className="text-sm font-semibold text-gray-700 mb-2">
@@ -337,7 +324,7 @@ export default function RacesPage() {
             )}
           </div>
 
-          {/* ─── PC: 텍스트 + 팝오버 방식 ─── */}
+          {/* ─── PC: 텍스트 + 인라인 펼침 방식 ─── */}
           <div className="hidden md:block">
             <div className="grid grid-cols-7 gap-px bg-gray-100 rounded-lg overflow-hidden">
               {Array.from({ length: firstDay }).map((_, i) => <div key={'e'+i} className="bg-gray-50 min-h-[90px]" />)}
@@ -345,38 +332,30 @@ export default function RacesPage() {
                 const day = i + 1
                 const isToday = calYear === today.getFullYear() && calMonthNum === today.getMonth() && day === today.getDate()
                 const events = getCalEvents(day)
-                const isPopover = popoverDay === day
+                const isSelected = selectedDay === day
                 return (
-                  <div key={day} className={'bg-white min-h-[90px] p-1.5 relative ' + (isToday ? 'bg-red-50' : '')}>
+                  <div key={day} className={'bg-white min-h-[90px] p-1.5 ' + (isToday ? 'bg-red-50' : '')}>
                     <p className={'text-xs mb-1 w-5 h-5 flex items-center justify-center rounded-full ' +
                       (isToday ? 'bg-[#c0392b] text-white font-bold' : 'text-gray-400')}>{day}</p>
                     {events.slice(0, 3).map((ev, j) => (
                       <div key={j} className={'text-[10px] px-1 py-0.5 rounded mb-0.5 truncate ' + calEventStyle(ev.type)}>{ev.name}</div>
                     ))}
                     {events.length > 3 && (
-                      <div className="relative" ref={isPopover ? popoverRef : undefined}>
+                      <>
                         <button
-                          onClick={() => setPopoverDay(isPopover ? null : day)}
+                          onClick={() => setSelectedDay(isSelected ? null : day)}
                           className="text-[10px] text-[#c0392b] font-medium hover:underline"
-                        >+{events.length - 3}개 더보기</button>
-                        {isPopover && (
-                          <div className="absolute z-30 top-5 left-0 bg-white border border-gray-200 rounded-xl shadow-xl p-3 w-64">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-xs font-semibold text-gray-700">{(calMonthNum + 1) + '월 ' + day + '일 전체 일정'}</p>
-                              <button onClick={() => setPopoverDay(null)} className="text-gray-400 hover:text-gray-600 text-xs">✕</button>
-                            </div>
-                            <div className="space-y-1.5 max-h-60 overflow-y-auto">
-                              {events.map((ev, j) => (
-                                <div key={j} className="flex items-start gap-2">
-                                  <span className={'text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ' + calEventStyle(ev.type)}>{typeLabel(ev.type)}</span>
-                                  <a href={ev.race.homepage_url || ev.race.url} target="_blank" rel="noopener noreferrer"
-                                    className="text-[10px] text-gray-700 hover:text-[#c0392b] hover:underline line-clamp-2">{ev.name}</a>
-                                </div>
-                              ))}
-                            </div>
+                        >
+                          {isSelected ? '접기 ▲' : '+' + (events.length - 3) + '개 더보기 ▼'}
+                        </button>
+                        {isSelected && (
+                          <div className="mt-1 space-y-0.5">
+                            {events.slice(3).map((ev, j) => (
+                              <div key={j} className={'text-[10px] px-1 py-0.5 rounded truncate ' + calEventStyle(ev.type)}>{ev.name}</div>
+                            ))}
                           </div>
                         )}
-                      </div>
+                      </>
                     )}
                   </div>
                 )
