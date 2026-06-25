@@ -53,8 +53,9 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   }
 
   return (
-    <CalendarBadgeClear />
-    <div className="space-y-6">
+    <>
+      <CalendarBadgeClear />
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">뛰꼬양 캘린더</h1>
@@ -64,7 +65,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           <button className="btn-primary flex items-center gap-2"><Plus size={18} />모임 만들기</button>
         </Link>
       </div>
-
+    </>
+  )
       {/* 달력 */}
       <div className="card p-0 overflow-hidden">
         <CalendarNav year={year} month={month} />
