@@ -28,21 +28,29 @@ export default async function AdminPage() {
           <span className="text-sm text-yellow-600">운영진 {admins.length}명</span>
         </div>
       </div>
+
       {pending.length > 0 && (
         <div>
-          <div className="flex items-center gap-2 mb-4"><Clock size={18} className="text-orange-500" /><h2 className="font-semibold text-gray-900">가입 승인 대기 ({pending.length}명)</h2></div>
+          <div className="flex items-center gap-2 mb-4">
+            <Clock size={18} className="text-orange-500" />
+            <h2 className="font-semibold text-gray-900">가입 승인 대기 ({pending.length}명)</h2>
+          </div>
           <div className="card p-0 overflow-hidden border-orange-100">
             <div className="divide-y divide-gray-50">
               {pending.map((p) => (
-                <div key={p.id} className="flex items-center gap-4 px-6 py-4">
-                  <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center font-bold text-orange-600 shrink-0">
-                    {p.name?.[0] ?? '?'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{p.name ?? '이름 없음'}</p>
-                    <p className="text-sm text-gray-500 truncate">{p.email}</p>
-                    {p.phone && <p className="text-xs text-gray-400">{p.phone}</p>}
-                    <p className="text-xs text-gray-400 mt-0.5">신청: {format(new Date(p.created_at), 'M월 d일 HH:mm', { locale: ko })}</p>
+                <div key={p.id} className="flex flex-col gap-3 px-6 py-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center font-bold text-orange-600 shrink-0">
+                      {p.name?.[0] ?? '?'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{p.name ?? '이름 없음'}</p>
+                      <p className="text-sm text-gray-500 truncate">{p.email}</p>
+                      {p.phone && <p className="text-xs text-gray-400">{p.phone}</p>}
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        신청: {format(new Date(p.created_at), 'M월 d일 HH:mm', { locale: ko })}
+                      </p>
+                    </div>
                   </div>
                   <MemberActions profileId={p.id} currentRole={p.role} showApprove profile={p} />
                 </div>
@@ -51,8 +59,12 @@ export default async function AdminPage() {
           </div>
         </div>
       )}
+
       <div>
-        <div className="flex items-center gap-2 mb-4"><Users size={18} className="text-blue-500" /><h2 className="font-semibold text-gray-900">전체 회원</h2></div>
+        <div className="flex items-center gap-2 mb-4">
+          <Users size={18} className="text-blue-500" />
+          <h2 className="font-semibold text-gray-900">전체 회원</h2>
+        </div>
         <div className="card p-0 overflow-hidden">
           <div className="divide-y divide-gray-50">
             {[...admins, ...members].map((p) => (
