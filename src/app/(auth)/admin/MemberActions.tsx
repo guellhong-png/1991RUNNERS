@@ -58,12 +58,17 @@ export default function MemberActions({ profileId, currentRole, showApprove, pro
   }
 
   const handleSave = async () => {
-    setLoading(true)
-    await supabase.from('profiles').update(form).eq('id', profileId)
+  setLoading(true)
+  const { error } = await supabase.from('profiles').update(form).eq('id', profileId)
+  if (error) {
+    alert('저장 실패: ' + error.message)
+    console.error(error)
+  } else {
     setEditing(false)
     router.refresh()
-    setLoading(false)
   }
+  setLoading(false)
+}
 
   return (
     <div className="w-full">
