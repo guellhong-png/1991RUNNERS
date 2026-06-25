@@ -59,7 +59,11 @@ export default function MemberActions({ profileId, currentRole, showApprove, pro
 
   const handleSave = async () => {
   setLoading(true)
-  const { error } = await supabase.from('profiles').update(form).eq('id', profileId)
+  const updateData = {
+    ...form,
+    birthday: form.birthday.trim() === '' ? null : form.birthday,
+  }
+  const { error } = await supabase.from('profiles').update(updateData).eq('id', profileId)
   if (error) {
     alert('저장 실패: ' + error.message)
     console.error(error)
