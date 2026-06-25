@@ -5,6 +5,10 @@ import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, MapPin, Search, X, Image, Check } from 'lucide-react'
 import Link from 'next/link'
 
+declare global {
+  interface Window { Kakao: any }
+}
+
 const EVENT_TYPES = [
   { value: 'run', label: '정기런' },
   { value: 'ddayrun', label: '뛰꼬양데이' },
@@ -29,7 +33,7 @@ export default function NewEventPage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [showSharePopup, setShowSharePopup] = useState(false)
-  const [createdEvent, setCreatedEvent] = useState<{ title: string; id: string } | null>(null)
+  const [createdEvent, setCreatedEvent] = useState<{ title: string; id: string; imageUrl?: string | null } | null>(null)
   const [form, setForm] = useState({
     title: '', description: '', location: '', location_url: '',
     event_date: '', event_time: '', event_type: 'run',
@@ -42,6 +46,25 @@ export default function NewEventPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const kakaoInitialized = useRef(false)
+
+  useEffect(() => {
+    const initKakao = () => {
+      if (window.Kakao && !window.Kakao.isInitialized()) {
+        window.Kakao.init('a0158adb0822ae2bd038e0321530c574')
+        kakaoInitialized.current = true
+      }
+    }
+    if (window.Kakao) {
+      initKakao()
+    } else {
+      const script = document.createElement('script')
+      script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js'
+      script.async = true
+      script.onload = initKakao
+      document.head.appendChild(script)
+    }
+  }, [])
 
   useEffect(() => {
     const title = searchParams.get('title') || ''
@@ -118,10 +141,10 @@ export default function NewEventPage() {
       event_date: `${form.event_date}T${form.event_time}:00`,
       event_type: form.event_type, created_by: user?.id,
       image_url,
-    }).select('id, title').single()
+    }).select('id, title, image_url').single()
 
     if (!error && inserted) {
-      setCreatedEvent({ title: inserted.title, id: inserted.id })
+      setCreatedEvent({ title: inserted.title, id: inserted.id, imageUrl: inserted.image_url })
       if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
         setShowSharePopup(true)
       } else {
@@ -133,21 +156,23 @@ export default function NewEventPage() {
   }
 
   const handleKakaoShare = () => {
-  if (!createdEvent) return
-  const url = `https://1991-runners.vercel.app/calendar/${createdEvent.id}`
-  if (window.Kakao) {
+    if (!createdEvent) return
+    if (!window.Kakao) return
+    if (!window.Kakao.isInitialized()) {
+      window.Kakao.init('a0158adb0822ae2bd038e0321530c574')
+    }
+    const url = `https://1991-runners.vercel.app/calendar/${createdEvent.id}`
     window.Kakao.Share.sendDefault({
       objectType: 'feed',
       content: {
-        title: `[1991RUNNERS] ${createdEvent.title}`,
+        title: `🏃 ${createdEvent.title}`,
         description: `${form.location ? form.location + ' · ' : ''}${form.event_date} ${form.event_time}`,
-        imageUrl: 'https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.jpeg',
+        imageUrl: createdEvent.imageUrl || 'https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.jpeg',
         link: { mobileWebUrl: url, webUrl: url },
       },
-      buttons: [{ title: '모임 보러가기', link: { mobileWebUrl: url, webUrl: url } }],
+      buttons: [{ title: '모임 보기', link: { mobileWebUrl: url, webUrl: url } }],
     })
   }
-}
 
   const handleSkipShare = () => {
     router.push('/calendar')
@@ -287,7 +312,7 @@ export default function NewEventPage() {
                   className="w-full py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2"
                   style={{ background: '#FEE500', color: '#3C1E1E' }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.48 3 2 6.72 2 11.28c0 2.88 1.68 5.4 4.2 6.96l-.96 3.6 4.08-2.16c.84.12 1.74.24 2.64.24 5.52 0 10-3.72 10-8.28C22 6.72 17.52 3 12 3z"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.477 3 2 6.477 2 11c0 2.897 1.698 5.417 4.268 6.933L5.5 21l3.75-2.25C10.007 19.578 11 19.75 12 19.75c5.523 0 10-3.477 10-7.75S17.523 3 12 3z"/></svg>
                   카카오톡으로 공유
                 </button>
                 <button
