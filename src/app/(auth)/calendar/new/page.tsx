@@ -122,7 +122,12 @@ export default function NewEventPage() {
 
     if (!error && inserted) {
       setCreatedEvent({ title: inserted.title, id: inserted.id })
-      setShowSharePopup(true)
+      if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
+        setShowSharePopup(true)
+      } else {
+        router.push('/calendar')
+        router.refresh()
+      }
     }
     setLoading(false)
   }
@@ -130,19 +135,13 @@ export default function NewEventPage() {
   const handleKakaoShare = () => {
     if (!createdEvent) return
     const url = `https://1991-runners.vercel.app/calendar/${createdEvent.id}`
-    if (window.Kakao && window.Kakao.isInitialized()) {
-      window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: `[1991RUNNERS] ${createdEvent.title}`,
-          description: `${form.location ? form.location + ' · ' : ''}${form.event_date} ${form.event_time}`,
-          imageUrl: 'https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.jpeg',
-          link: { mobileWebUrl: url, webUrl: url },
-        },
-        buttons: [{ title: '모임 보러가기', link: { mobileWebUrl: url, webUrl: url } }],
-      })
+    const text = `[1991RUNNERS] ${createdEvent.title}\n${form.location ? form.location + ' · ' : ''}${form.event_date} ${form.event_time}\n\n모임 보러가기: ${url}`
+    if (navigator.share) {
+      navigator.share({ title: `[1991RUNNERS] ${createdEvent.title}`, text, url })
     } else {
-      window.open(`https://sharer.kakao.com/talk/friends/picker/link?app_key=a0158adb0822ae2bd038e0321530c574&url=${encodeURIComponent(url)}`, '_blank')
+      navigator.clipboard.writeText(text).then(() => {
+        alert('링크가 복사되었습니다! 카카오톡에 붙여넣기 해주세요.')
+      })
     }
   }
 
@@ -260,10 +259,7 @@ export default function NewEventPage() {
         </div>
       </div>
 
-      {/* 카카오 SDK */}
-      <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" />
-
-      {/* 공유 팝업 */}
+      {/* 공유 팝업 (모바일 전용) */}
       {showSharePopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
