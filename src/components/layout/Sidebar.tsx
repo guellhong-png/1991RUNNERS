@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Profile } from '@/types'
 import { Calendar, Megaphone, Wallet, Settings, LogOut, Home, Users, BookOpen, ClipboardList, Archive, ChevronDown, ChevronRight, Newspaper, Star, MessageSquare, Menu, X, Pencil, Camera, Trophy } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 export default function Sidebar({ profile }: { profile: Profile }) {
   const pathname = usePathname()
@@ -16,6 +16,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
   const [profileSaving, setProfileSaving] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState((profile as any).avatar_url ?? null)
   const [avatarUploading, setAvatarUploading] = useState(false)
+  const [newEventCount, setNewEventCount] = useState(0)
   const avatarFileRef = useRef<HTMLInputElement>(null)
   const [profileForm, setProfileForm] = useState({
     name: profile.name ?? '',
@@ -25,6 +26,22 @@ export default function Sidebar({ profile }: { profile: Profile }) {
     pb_full: (profile as any).pb_full ?? '',
     pb_10k: (profile as any).pb_10k ?? '',
   })
+
+  useEffect(() => {
+    const checkNewEvents = async () => {
+      const lastVisited = localStorage.getItem('calendar_last_visited')
+      if (!lastVisited) {
+        localStorage.setItem('calendar_last_visited', new Date().toISOString())
+        return
+      }
+      const { data } = await supabase
+        .from('events')
+        .select('id')
+        .gt('created_at', lastVisited)
+      setNewEventCount(data?.length ?? 0)
+    }
+    checkNewEvents()
+  }, [pathname])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -49,7 +66,11 @@ export default function Sidebar({ profile }: { profile: Profile }) {
 
   const handleProfileSave = async () => {
     setProfileSaving(true)
-    await supabase.from('profiles').update(profileForm).eq('id', profile.id)
+    const updateData = {
+      ...profileForm,
+      birthday: profileForm.birthday.trim() === '' ? null : profileForm.birthday,
+    }
+    await supabase.from('profiles').update(updateData).eq('id', profile.id)
     setProfileSaving(false)
     setEditProfileOpen(false)
     router.refresh()
@@ -57,11 +78,17 @@ export default function Sidebar({ profile }: { profile: Profile }) {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
-  const NavItem = ({ href, icon, label, adminOnly = false }: { href: string; icon: React.ReactNode; label: string; adminOnly?: boolean }) => {
+  const NavItem = ({ href, icon, label, adminOnly = false, badge }: { href: string; icon: React.ReactNode; label: string; adminOnly?: boolean; badge?: number }) => {
     if (adminOnly && profile.role !== 'admin') return null
     return (
       <Link href={href} onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${isActive(href) ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
-        {icon}{label}
+        {icon}
+        <span className="flex-1">{label}</span>
+        {badge && badge > 0 && (
+          <span className="bg-[#c0392b] text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none">
+            {badge > 99 ? '99+' : badge}
+          </span>
+        )}
       </Link>
     )
   }
@@ -106,7 +133,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
         <NavItem href="/about" icon={<BookOpen size={18} />} label="뛰꼬양 소개" />
         <NavItem href="/profile" icon={<Users size={18} />} label="회원 프로필" />
         <NavItem href="/races" icon={<Trophy size={18} />} label="대회 일정" />
-        <NavItem href="/calendar" icon={<Calendar size={18} />} label="뛰꼬양 캘린더" />
+        <NavItem href="/calendar" icon={<Calendar size={18} />} label="뛰꼬양 캘린더" badge={newEventCount} />
         <div>
           <button
             onClick={() => setBoardOpen(!boardOpen)}
