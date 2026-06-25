@@ -133,19 +133,21 @@ export default function NewEventPage() {
   }
 
   const handleKakaoShare = () => {
-    if (!createdEvent) return
-    const url = `https://1991-runners.vercel.app/calendar/${createdEvent.id}`
-    const text = `[1991RUNNERS] ${createdEvent.title}\n${form.location ? form.location + ' · ' : ''}${form.event_date} ${form.event_time}\n\n모임 보러가기: ${url}`
-
-    const kakaoScheme = `kakaolink://send?text=${encodeURIComponent(text)}`
-    window.location.href = kakaoScheme
-
-    setTimeout(() => {
-      if (navigator.share) {
-        navigator.share({ title: `[1991RUNNERS] ${createdEvent.title}`, text, url })
-      }
-    }, 2000)
+  if (!createdEvent) return
+  const url = `https://1991-runners.vercel.app/calendar/${createdEvent.id}`
+  if (window.Kakao) {
+    window.Kakao.Share.sendDefault({
+      objectType: 'feed',
+      content: {
+        title: `[1991RUNNERS] ${createdEvent.title}`,
+        description: `${form.location ? form.location + ' · ' : ''}${form.event_date} ${form.event_time}`,
+        imageUrl: 'https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.jpeg',
+        link: { mobileWebUrl: url, webUrl: url },
+      },
+      buttons: [{ title: '모임 보러가기', link: { mobileWebUrl: url, webUrl: url } }],
+    })
   }
+}
 
   const handleSkipShare = () => {
     router.push('/calendar')
