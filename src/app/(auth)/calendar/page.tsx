@@ -2,10 +2,12 @@ import { createClient } from '@/lib/supabase/server'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isSameMonth, isToday } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import Link from 'next/link'
-import { Plus, MapPin, Clock, Users, Calendar } from 'lucide-react'
+import { Plus, Calendar } from 'lucide-react'
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/types'
 import CalendarNav from './CalendarNav'
 import CalendarBadgeClear from './CalendarBadgeClear'
+import UpcomingEvents from './UpcomingEvents'
+import { cookies } from 'next/headers'
 
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string; year?: string }> }) {
   const params = await searchParams
@@ -41,9 +43,6 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const getEventsForDay = (day: Date) =>
     events?.filter(e => isSameDay(new Date(e.event_date), day)) ?? []
 
-  const getMyStatus = (event: any) =>
-    event.attendances?.find((a: any) => a.user_id === user?.id)?.status ?? null
-
   const typeColors: Record<string, string> = {
     run: 'bg-blue-500',
     ddayrun: 'bg-purple-500',
@@ -51,6 +50,10 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     race: 'bg-red-500',
     social: 'bg-yellow-500',
   }
+
+  // 쿠키에서 lastVisited 읽기
+  const cookieStore = await cookies()
+  const lastVisited = cookieStore.get('calendar_last_visited')?.value ?? null
 
   return (
     <div className="space-y-6">
@@ -120,46 +123,11 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">다가오는 모임</h2>
-        {(!upcomingEvents || upcomingEvents.length === 0) ? (
-          <div className="text-center py-12 text-gray-400">
-            <Calendar className="mx-auto mb-3 opacity-30" size={40} />
-            <p>예정된 모임이 없습니다</p>
-          </div>
-        ) : (
-          <div className="grid gap-3">
-            {upcomingEvents.map(event => {
-              const attendingCount = event.attendances?.filter((a: any) => a.status === 'attending').length ?? 0
-              const myStatus = getMyStatus(event)
-              return (
-                <Link key={event.id} href={`/calendar/${event.id}`}>
-                  <div className="card hover:shadow-md transition-all cursor-pointer border-l-4 border-[#e94560] py-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className={`badge ${EVENT_TYPE_COLORS[event.event_type as keyof typeof EVENT_TYPE_COLORS] || 'bg-gray-100 text-gray-600'}`}>
-                            {EVENT_TYPE_LABELS[event.event_type as keyof typeof EVENT_TYPE_LABELS] || event.event_type}
-                          </span>
-                          {myStatus === 'attending' && <span className="badge bg-green-100 text-green-700">✓ 참여</span>}
-                          {myStatus === 'not_attending' && <span className="badge bg-gray-100 text-gray-500">✗ 불참</span>}
-                        </div>
-                        <h3 className="font-semibold text-gray-900 mb-1">{event.title}</h3>
-                        <div className="flex flex-wrap gap-3">
-                          <div className="flex items-center gap-1 text-xs text-gray-500"><Clock size={12} />{format(new Date(event.event_date), 'M월 d일 (E) HH:mm', { locale: ko })}</div>
-                          <div className="flex items-center gap-1 text-xs text-gray-500"><MapPin size={12} />{event.location}</div>
-                          <div className="flex items-center gap-1 text-xs text-gray-500"><Users size={12} />참여 {attendingCount}명</div>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-2xl font-bold text-[#e94560]">{format(new Date(event.event_date), 'd')}</p>
-                        <p className="text-xs text-gray-400">{format(new Date(event.event_date), 'M월', { locale: ko })}</p>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        )}
+        <UpcomingEvents
+          events={upcomingEvents ?? []}
+          userId={user?.id ?? ''}
+          lastVisited={lastVisited}
+        />
       </div>
     </div>
   )
