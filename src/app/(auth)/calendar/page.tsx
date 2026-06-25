@@ -53,9 +53,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <CalendarBadgeClear />
-      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">뛰꼬양 캘린더</h1>
@@ -65,20 +64,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           <button className="btn-primary flex items-center gap-2"><Plus size={18} />모임 만들기</button>
         </Link>
       </div>
-    </>
-  )
-      {/* 달력 */}
+
       <div className="card p-0 overflow-hidden">
         <CalendarNav year={year} month={month} />
-
-        {/* 요일 헤더 */}
         <div className="grid grid-cols-7 border-b border-gray-100">
           {['일', '월', '화', '수', '목', '금', '토'].map((d, i) => (
             <div key={d} className={`text-center text-xs font-medium py-2 ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-gray-500'}`}>{d}</div>
           ))}
         </div>
-
-        {/* 날짜 셀 */}
         <div className="grid grid-cols-7">
           {Array.from({ length: totalCells }).map((_, idx) => {
             const dayIdx = idx - firstDayOfWeek
@@ -86,7 +79,6 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             const dayEvents = day ? getEventsForDay(day) : []
             const isCurrentMonth = day ? isSameMonth(day, currentMonth) : false
             const dayOfWeek = idx % 7
-
             return (
               <div key={idx} className={`min-h-20 border-b border-r border-gray-50 p-1 ${!isCurrentMonth ? 'bg-gray-50/50' : ''}`}>
                 {day && (
@@ -116,8 +108,6 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             )
           })}
         </div>
-
-        {/* 범례 */}
         <div className="flex flex-wrap gap-3 px-4 py-3 border-t border-gray-100">
           {Object.entries(EVENT_TYPE_LABELS).map(([key, label]) => (
             <div key={key} className="flex items-center gap-1.5">
@@ -128,7 +118,6 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         </div>
       </div>
 
-      {/* 다가오는 모임 리스트 */}
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">다가오는 모임</h2>
         {(!upcomingEvents || upcomingEvents.length === 0) ? (
