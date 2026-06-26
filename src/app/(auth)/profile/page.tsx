@@ -17,11 +17,11 @@ export default async function ProfilePage() {
     .order('name', { ascending: true })
 
   const GradeBadge = ({ grade, role }: { grade?: string; role: string }) => {
-    const label = role === 'admin' ? '운영진' : (grade || '준회원')
-    const color = role === 'admin' ? 'bg-yellow-100 text-yellow-800' :
-      label === '정회원' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
-    return <span className={`badge ${color}`}>{label}</span>
-  }
+  const label = role === 'admin' ? '운영진' : (grade || '준회원')
+  const color = role === 'admin' ? 'bg-yellow-100 text-yellow-800' :
+    label === '정회원' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+  return <span className={`badge ${color} whitespace-nowrap`}>{label}</span>
+}
 
   return (
     <div className="space-y-6">
