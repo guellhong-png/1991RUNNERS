@@ -174,7 +174,7 @@ export default function NewEventPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">모임 종류 *</label>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {EVENT_TYPES.map(({ value, label }) => (
                   <button key={value} type="button" onClick={() => setForm({ ...form, event_type: value })}
                     className={`py-2 px-2 rounded-lg text-xs font-medium transition-colors ${form.event_type === value ? 'bg-[#c0392b] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
