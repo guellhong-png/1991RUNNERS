@@ -71,7 +71,7 @@ export default function FinanceList({ finances, isAdmin }: { finances: Finance[]
         {finances.map((item) => (
           <div key={item.id}>
             {editingId === item.id ? (
-              <div className="px-6 py-4 bg-gray-50 space-y-3">
+              <div className="px-4 py-4 bg-gray-50 space-y-3">
                 <div className="flex gap-3">
                   {(['income', 'expense'] as const).map((t) => (
                     <button key={t} type="button" onClick={() => setEditForm({ ...editForm, type: t })}
@@ -125,41 +125,35 @@ export default function FinanceList({ finances, isAdmin }: { finances: Finance[]
             ) : (
               <div>
                 <div
-                  className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 cursor-pointer"
+                  className="flex items-center gap-3 px-4 py-4 hover:bg-gray-50 cursor-pointer"
                   onClick={() => item.image_url ? setExpandedId(expandedId === item.id ? null : item.id) : null}
                 >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${item.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
                     {item.type === 'income' ? <TrendingUp size={15} className="text-green-600" /> : <TrendingDown size={15} className="text-red-600" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-gray-900">{item.description}</p>
-                      {item.is_edited && <span className="text-xs text-gray-400">수정됨</span>}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-medium text-gray-900 truncate">{item.description}</p>
+                      {item.is_edited && <span className="text-xs text-gray-400 whitespace-nowrap shrink-0">수정됨</span>}
                     </div>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 whitespace-nowrap">
                       {item.category && <span className="mr-2">{item.category}</span>}
                       {format(new Date(item.transaction_date), 'yyyy.M.d', { locale: ko })}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <div className="text-right">
-                      <p className={`font-semibold ${item.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
+                      <p className={`text-sm font-semibold whitespace-nowrap ${item.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
                         {item.type === 'income' ? '+' : '-'}{item.amount.toLocaleString()}원
                       </p>
-                      {item.balance_after != null && <p className="text-xs text-gray-400">잔액 {item.balance_after.toLocaleString()}원</p>}
+                      {item.balance_after != null && <p className="text-xs text-gray-400 whitespace-nowrap">잔액 {item.balance_after.toLocaleString()}원</p>}
                     </div>
                     {isAdmin && (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={e => { e.stopPropagation(); handleEdit(item) }}
-                          className="text-gray-400 hover:text-gray-600 transition-colors"
-                        >
+                      <div className="flex items-center gap-1">
+                        <button onClick={e => { e.stopPropagation(); handleEdit(item) }} className="text-gray-400 hover:text-gray-600 p-1">
                           <Pencil size={14} />
                         </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); handleDelete(item.id) }}
-                          className="text-red-300 hover:text-red-500 transition-colors"
-                        >
+                        <button onClick={e => { e.stopPropagation(); handleDelete(item.id) }} className="text-red-300 hover:text-red-500 p-1">
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -171,15 +165,11 @@ export default function FinanceList({ finances, isAdmin }: { finances: Finance[]
                     )}
                   </div>
                 </div>
-
                 {item.image_url && expandedId === item.id && (
-                  <div className="px-6 pb-4">
-                    <img
-                      src={item.image_url}
-                      alt="증빙"
+                  <div className="px-4 pb-4">
+                    <img src={item.image_url} alt="증빙"
                       onClick={() => setLightboxUrl(item.image_url)}
-                      className="rounded-lg max-h-64 object-contain border border-gray-100 cursor-pointer hover:opacity-90 transition-opacity"
-                    />
+                      className="rounded-lg max-h-64 object-contain border border-gray-100 cursor-pointer hover:opacity-90 transition-opacity" />
                   </div>
                 )}
               </div>
