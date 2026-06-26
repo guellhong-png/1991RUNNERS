@@ -1,10 +1,24 @@
 'use client'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
+  const [checking, setChecking] = useState(true)
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        router.replace('/dashboard')
+      } else {
+        setChecking(false)
+      }
+    }
+    checkSession()
+  }, [])
 
   const handleKakaoLogin = async () => {
     await supabase.auth.signInWithOAuth({
@@ -14,6 +28,18 @@ export default function LoginPage() {
         scopes: 'profile_nickname profile_image',
       },
     })
+  }
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <img
+          src="https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.jpeg"
+          alt="1991RUNNERS"
+          className="w-24 h-24 rounded-2xl animate-pulse"
+        />
+      </div>
+    )
   }
 
   return (
