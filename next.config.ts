@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  headers: async () => [
+    {
+      source: '/manifest.json',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=0' }],
+    },
+  ],
 };
 
 export default nextConfig;
