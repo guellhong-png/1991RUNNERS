@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="뛰꼬양" />
         <meta name="theme-color" content="#c0392b" />
-        <link rel="apple-touch-icon" href="https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.png" />
+        <link rel="apple-touch-icon" href="/icon-512.png" />
       </head>
       <body style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{children}</body>
     </html>
