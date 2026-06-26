@@ -9,12 +9,12 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.png",
+      "src": "/icon-512.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://kvotmnyktvgqlplfbuqh.supabase.co/storage/v1/object/public/club-images/1991.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
