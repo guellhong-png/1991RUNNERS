@@ -64,7 +64,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           <p className="text-gray-500 mt-1">모임 일정을 확인하고 참여 여부를 알려주세요</p>
         </div>
         <Link href="/calendar/new">
-          <button className="btn-primary flex items-center gap-2"><Plus size={18} />모임 만들기</button>
+          <button className="btn-primary flex items-center gap-2 whitespace-nowrap"><Plus size={18} />모임 만들기</button>
         </Link>
       </div>
 
