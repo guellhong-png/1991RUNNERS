@@ -31,7 +31,7 @@ export default function NewEventPage() {
   const [createdEvent, setCreatedEvent] = useState<{ title: string; id: string; imageUrl?: string | null } | null>(null)
   const [form, setForm] = useState({
     title: '', description: '', location: '', location_url: '',
-    event_date: '', event_time: '', event_type: 'run',
+    event_date: '', event_time: '', event_type: 'run', has_afterparty: false,
   })
   const [locationQuery, setLocationQuery] = useState('')
   const [locationResults, setLocationResults] = useState<KakaoPlace[]>([])
@@ -131,6 +131,7 @@ export default function NewEventPage() {
       location: form.location, location_url: form.location_url,
       event_date: `${form.event_date}T${form.event_time}:00`,
       event_type: form.event_type, created_by: user?.id, image_url,
+      has_afterparty: form.has_afterparty,
     }).select('id, title, image_url').single()
     if (!error && inserted) {
       setCreatedEvent({ title: inserted.title, id: inserted.id, imageUrl: inserted.image_url })
@@ -244,6 +245,25 @@ export default function NewEventPage() {
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
                 className="input h-28 resize-none" placeholder="거리, 페이스, 준비물 등" />
             </div>
+
+            {/* 뒷풀이 토글 */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+              <div>
+                <p className="text-sm font-medium text-gray-700">🍺 뒷풀이</p>
+                <p className="text-xs text-gray-400 mt-0.5">뒷풀이가 있는 모임인가요?</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, has_afterparty: !form.has_afterparty })}
+                className={`relative w-11 h-6 rounded-full transition-colors ${form.has_afterparty ? 'bg-[#c0392b]' : 'bg-gray-200'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.has_afterparty ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+            {form.has_afterparty && (
+              <p className="text-xs text-[#c0392b] -mt-3 px-1">참석자들이 뒷풀이 참석 여부를 별도로 선택할 수 있어요</p>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">사진 (1MB 이하)</label>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
