@@ -159,6 +159,9 @@ export default function NewEventPage() {
       },
       buttons: [{ title: '모임 보기', link: { mobileWebUrl: url, webUrl: url } }],
     })
+    setShowSharePopup(false)
+    router.push('/calendar')
+    router.refresh()
   }
 
   const handleSkipShare = () => { router.push('/calendar'); router.refresh() }
