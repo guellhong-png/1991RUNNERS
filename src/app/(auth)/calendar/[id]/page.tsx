@@ -15,7 +15,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single()
-  const { data: event } = await supabase.from('events').select('*, creator:profiles!created_by(id, name, avatar_url), attendances(id, status, user_id, profile:profiles!user_id(id, name, avatar_url))').eq('id', id).single()
+  const { data: event } = await supabase.from('events').select('*, creator:profiles!created_by(id, name, avatar_url), attendances(id, status, afterparty_status, user_id, profile:profiles!user_id(id, name, avatar_url))').eq('id', id).single()
   if (!event) notFound()
 
   const { data: eventComments } = await supabase
@@ -26,6 +26,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
   const attending = event.attendances?.filter((a: any) => a.status === 'attending') ?? []
   const notAttending = event.attendances?.filter((a: any) => a.status === 'not_attending') ?? []
+  const afterpartyAttending = event.attendances?.filter((a: any) => a.afterparty_status === 'attending') ?? []
   const myAttendance = event.attendances?.find((a: any) => a.user_id === user?.id)
   const canDelete = profile?.role === 'admin' || event.created_by === user?.id
   const canEdit = profile?.role === 'admin' || event.created_by === user?.id
@@ -47,9 +48,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       {/* 모임 기본 정보 */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
-          <span className={`badge ${EVENT_TYPE_COLORS[event.event_type as keyof typeof EVENT_TYPE_COLORS] || 'bg-gray-100 text-gray-600'}`}>
-            {EVENT_TYPE_LABELS[event.event_type as keyof typeof EVENT_TYPE_LABELS] || event.event_type}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`badge ${EVENT_TYPE_COLORS[event.event_type as keyof typeof EVENT_TYPE_COLORS] || 'bg-gray-100 text-gray-600'}`}>
+              {EVENT_TYPE_LABELS[event.event_type as keyof typeof EVENT_TYPE_LABELS] || event.event_type}
+            </span>
+            {event.has_afterparty && (
+              <span className="badge bg-red-50 text-red-500">🍺 뒷풀이 있음</span>
+            )}
+          </div>
           <KakaoShareButton
             title={event.title}
             description={`${format(new Date(event.event_date), 'M월 d일 (E) HH:mm', { locale: ko })} · ${event.location}`}
@@ -100,7 +106,6 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
-        {/* 상세 내용 */}
         {event.description && (
           <div className="border-t border-gray-100 pt-4">
             <p className="text-gray-600 whitespace-pre-wrap">{event.description}</p>
@@ -111,7 +116,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         {!isPast && (
           <div className="border-t border-gray-100 pt-4 mt-4">
             <p className="text-sm font-medium text-gray-700 mb-3">참여 여부를 알려주세요</p>
-            <AttendanceButtons eventId={event.id} userId={user!.id} currentStatus={myAttendance?.status ?? null} attendanceId={myAttendance?.id ?? null} />
+            <AttendanceButtons
+              eventId={event.id}
+              userId={user!.id}
+              currentStatus={myAttendance?.status ?? null}
+              attendanceId={myAttendance?.id ?? null}
+              hasAfterparty={event.has_afterparty ?? false}
+              currentAfterpartyStatus={myAttendance?.afterparty_status ?? null}
+            />
           </div>
         )}
       </div>
@@ -134,7 +146,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                       ? <img src={a.profile.avatar_url} className="w-full h-full object-cover" />
                       : a.profile?.name?.[0]}
                   </div>
-                  <span className="text-sm text-gray-700">{a.profile?.name}</span>
+                  <span className="text-sm text-gray-700 flex-1">{a.profile?.name}</span>
+                  {event.has_afterparty && a.afterparty_status === 'attending' && (
+                    <span className="text-xs">🍺</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -159,9 +174,30 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             </div>
           </div>
         </div>
+
+        {/* 뒷풀이 현황 */}
+        {event.has_afterparty && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-sm font-medium text-gray-700">🍺 뒷풀이 참여 ({afterpartyAttending.length}명)</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {afterpartyAttending.length === 0 && <p className="text-xs text-gray-400">아직 없어요</p>}
+              {afterpartyAttending.map((a: any) => (
+                <div key={a.id} className="flex items-center gap-1.5 bg-red-50 rounded-lg px-3 py-1.5">
+                  <div className="w-5 h-5 rounded-full bg-red-200 flex items-center justify-center text-xs font-medium text-red-700 overflow-hidden">
+                    {a.profile?.avatar_url
+                      ? <img src={a.profile.avatar_url} className="w-full h-full object-cover" />
+                      : a.profile?.name?.[0]}
+                  </div>
+                  <span className="text-xs text-gray-700">{a.profile?.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 댓글 */}
       <EventActions
         event={event}
         currentUserId={user!.id}
