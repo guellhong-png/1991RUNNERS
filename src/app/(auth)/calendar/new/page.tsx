@@ -18,13 +18,8 @@ const EVENT_TYPES = [
 ]
 
 interface KakaoPlace {
-  id: string
-  place_name: string
-  address_name: string
-  road_address_name: string
-  x: string
-  y: string
-  place_url: string
+  id: string; place_name: string; address_name: string
+  road_address_name: string; x: string; y: string; place_url: string
 }
 
 export default function NewEventPage() {
@@ -55,9 +50,7 @@ export default function NewEventPage() {
         kakaoInitialized.current = true
       }
     }
-    if (window.Kakao) {
-      initKakao()
-    } else {
+    if (window.Kakao) { initKakao() } else {
       const script = document.createElement('script')
       script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js'
       script.async = true
@@ -123,7 +116,6 @@ export default function NewEventPage() {
     e.preventDefault()
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
-
     let image_url = null
     if (imageFile) {
       const ext = imageFile.name.split('.').pop()
@@ -134,15 +126,12 @@ export default function NewEventPage() {
         image_url = data.publicUrl
       }
     }
-
     const { data: inserted, error } = await supabase.from('events').insert({
       title: form.title, description: form.description,
       location: form.location, location_url: form.location_url,
       event_date: `${form.event_date}T${form.event_time}:00`,
-      event_type: form.event_type, created_by: user?.id,
-      image_url,
+      event_type: form.event_type, created_by: user?.id, image_url,
     }).select('id, title, image_url').single()
-
     if (!error && inserted) {
       setCreatedEvent({ title: inserted.title, id: inserted.id, imageUrl: inserted.image_url })
       if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
@@ -158,9 +147,7 @@ export default function NewEventPage() {
   const handleKakaoShare = () => {
     if (!createdEvent) return
     if (!window.Kakao) return
-    if (!window.Kakao.isInitialized()) {
-      window.Kakao.init('a0158adb0822ae2bd038e0321530c574')
-    }
+    if (!window.Kakao.isInitialized()) window.Kakao.init('a0158adb0822ae2bd038e0321530c574')
     const url = `https://1991-runners.vercel.app/calendar/${createdEvent.id}`
     window.Kakao.Share.sendDefault({
       objectType: 'feed',
@@ -174,10 +161,7 @@ export default function NewEventPage() {
     })
   }
 
-  const handleSkipShare = () => {
-    router.push('/calendar')
-    router.refresh()
-  }
+  const handleSkipShare = () => { router.push('/calendar'); router.refresh() }
 
   return (
     <>
@@ -192,8 +176,7 @@ export default function NewEventPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">모임 종류 *</label>
               <div className="grid grid-cols-5 gap-2">
                 {EVENT_TYPES.map(({ value, label }) => (
-                  <button key={value} type="button"
-                    onClick={() => setForm({ ...form, event_type: value })}
+                  <button key={value} type="button" onClick={() => setForm({ ...form, event_type: value })}
                     className={`py-2 px-2 rounded-lg text-xs font-medium transition-colors ${form.event_type === value ? 'bg-[#c0392b] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                     {label}
                   </button>
@@ -207,11 +190,11 @@ export default function NewEventPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">날짜 *</label>
-                <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} className="input" required />
+                <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} className="input w-full" required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">시간 *</label>
-                <input type="time" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })} className="input" required />
+                <input type="time" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })} className="input w-full" required />
               </div>
             </div>
             <div>
@@ -219,12 +202,8 @@ export default function NewEventPage() {
               <div className="relative">
                 <div className="relative">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    value={locationQuery}
-                    onChange={(e) => { setLocationQuery(e.target.value); setLocationSelected(false) }}
-                    className="input pl-9 pr-9"
-                    placeholder="장소 검색 (예: 여의도 한강공원)"
-                  />
+                  <input value={locationQuery} onChange={(e) => { setLocationQuery(e.target.value); setLocationSelected(false) }}
+                    className="input pl-9 pr-9" placeholder="장소 검색 (예: 여의도 한강공원)" />
                   {locationQuery && (
                     <button type="button" onClick={handleClearLocation} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                       <X size={16} />
@@ -259,7 +238,8 @@ export default function NewEventPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">상세 내용</label>
-              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="input h-28 resize-none" placeholder="거리, 페이스, 준비물 등" />
+              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className="input h-28 resize-none" placeholder="거리, 페이스, 준비물 등" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">사진 (1MB 이하)</label>
@@ -282,13 +262,14 @@ export default function NewEventPage() {
             </div>
             <div className="flex gap-3 pt-2">
               <Link href="/calendar" className="btn-secondary flex-1 text-center py-3">취소</Link>
-              <button type="submit" disabled={loading} className="btn-primary flex-1 py-3 disabled:opacity-50">{loading ? '등록 중...' : '모임 등록'}</button>
+              <button type="submit" disabled={loading} className="btn-primary flex-1 py-3 disabled:opacity-50">
+                {loading ? '등록 중...' : '모임 등록'}
+              </button>
             </div>
           </form>
         </div>
       </div>
 
-      {/* 공유 팝업 (모바일 전용) */}
       {showSharePopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
@@ -307,18 +288,13 @@ export default function NewEventPage() {
                 <p className="text-sm font-medium text-gray-800">카카오톡으로 공유하기</p>
               </div>
               <div className="flex flex-col gap-2">
-                <button
-                  onClick={handleKakaoShare}
+                <button onClick={handleKakaoShare}
                   className="w-full py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2"
-                  style={{ background: '#FEE500', color: '#3C1E1E' }}
-                >
+                  style={{ background: '#FEE500', color: '#3C1E1E' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.477 3 2 6.477 2 11c0 2.897 1.698 5.417 4.268 6.933L5.5 21l3.75-2.25C10.007 19.578 11 19.75 12 19.75c5.523 0 10-3.477 10-7.75S17.523 3 12 3z"/></svg>
                   카카오톡으로 공유
                 </button>
-                <button
-                  onClick={handleSkipShare}
-                  className="w-full py-3 rounded-xl text-sm text-gray-400 hover:text-gray-600 transition-colors"
-                >
+                <button onClick={handleSkipShare} className="w-full py-3 rounded-xl text-sm text-gray-400 hover:text-gray-600 transition-colors">
                   나중에 공유할게요
                 </button>
               </div>
