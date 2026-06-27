@@ -9,16 +9,25 @@ export default function LoginPage() {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    const checkSession = async () => {
+  const checkSession = async () => {
+    try {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         router.replace('/dashboard')
       } else {
         setChecking(false)
       }
+    } catch {
+      setChecking(false)
     }
-    checkSession()
-  }, [])
+  }
+
+  // 3초 후에도 로딩 중이면 강제로 로그인 화면 표시
+  const timeout = setTimeout(() => setChecking(false), 3000)
+  checkSession().finally(() => clearTimeout(timeout))
+
+  return () => clearTimeout(timeout)
+}, [])
 
   const handleKakaoLogin = async () => {
     await supabase.auth.signInWithOAuth({
