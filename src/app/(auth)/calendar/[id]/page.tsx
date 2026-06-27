@@ -43,6 +43,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             <Pencil size={18} />
           </Link>
         )}
+        {canEdit && <QRButton eventId={event.id} />}
         {canDelete && <DeleteEventButton eventId={event.id} />}
       </div>
 
