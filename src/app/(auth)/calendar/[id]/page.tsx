@@ -9,6 +9,7 @@ import AttendanceButtons from './AttendanceButtons'
 import DeleteEventButton from './DeleteEventButton'
 import KakaoShareButton from './KakaoShareButton'
 import EventActions from './EventActions'
+import QRButton from './QRButton'
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
