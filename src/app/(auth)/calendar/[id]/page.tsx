@@ -38,12 +38,13 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       <div className="flex items-center gap-3">
         <Link href="/calendar" className="text-gray-400 hover:text-gray-600"><ArrowLeft size={20} /></Link>
         <h1 className="text-2xl font-bold text-gray-900 flex-1">{event.title}</h1>
+        
         {canEdit && (
           <Link href={`/calendar/${id}/edit`} className="text-gray-400 hover:text-gray-600">
             <Pencil size={18} />
           </Link>
         )}
-        {canEdit && <QRButton eventId={event.id} />}
+        {canEdit && <QRButton eventId={event.id} eventTitle={event.title} />}
         {canDelete && <DeleteEventButton eventId={event.id} />}
       </div>
 
