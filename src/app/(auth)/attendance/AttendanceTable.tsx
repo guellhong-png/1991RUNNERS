@@ -9,7 +9,7 @@ const TYPE_COLORS: Record<string, string> = {
   event: 'bg-green-100 text-green-700', race: 'bg-red-100 text-red-700',
   social: 'bg-yellow-100 text-yellow-700',
 }
-const TYPE_KEYS = ['run', 'ddayrun', 'event', 'race', 'social']
+const TYPE_KEYS = ['run', 'ddayrun', 'event', 'race']
 const PAGE_SIZE = 20
 
 interface Profile { id: string; name: string; avatar_url?: string }
