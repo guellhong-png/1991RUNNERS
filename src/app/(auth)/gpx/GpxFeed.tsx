@@ -7,6 +7,10 @@ import { ko } from 'date-fns/locale'
 import { Download, Heart, MessageCircle, Plus, Check } from 'lucide-react'
 import GpxUploadModal from './GpxUploadModal'
 
+declare global {
+  interface Window { kakao: any }
+}
+
 interface Route {
   id: string
   title: string
@@ -44,38 +48,56 @@ const handleDownload = (url: string, title: string) => {
   document.body.removeChild(link)
 }
 
-// SVG 경로 지도
-const RouteMap = ({ polyline }: { polyline: string }) => {
-  const coords: [number, number][] = JSON.parse(polyline)
-  if (coords.length < 2) return null
+const RouteMap = ({ polyline, routeId }: { polyline: string; routeId: string }) => {
+  const mapRef = useRef<HTMLDivElement>(null)
 
-  const lats = coords.map(c => c[0])
-  const lons = coords.map(c => c[1])
-  const minLat = Math.min(...lats), maxLat = Math.max(...lats)
-  const minLon = Math.min(...lons), maxLon = Math.max(...lons)
+  useEffect(() => {
+    const coords: [number, number][] = JSON.parse(polyline)
+    if (coords.length < 2) return
 
-  const W = 400, H = 200
-  const pad = 16
+    const loadMap = () => {
+      if (!window.kakao?.maps) return
+      window.kakao.maps.load(() => {
+        if (!mapRef.current) return
+        const center = coords[Math.floor(coords.length / 2)]
+        const map = new window.kakao.maps.Map(mapRef.current, {
+          center: new window.kakao.maps.LatLng(center[0], center[1]),
+          level: 5,
+        })
 
-  const toX = (lon: number) => pad + ((lon - minLon) / (maxLon - minLon || 1)) * (W - pad * 2)
-  const toY = (lat: number) => H - pad - ((lat - minLat) / (maxLat - minLat || 1)) * (H - pad * 2)
+        const path = coords.map(c => new window.kakao.maps.LatLng(c[0], c[1]))
 
-  const points = coords.map(c => `${toX(c[1])},${toY(c[0])}`).join(' ')
+        new window.kakao.maps.Polyline({
+          map,
+          path,
+          strokeWeight: 4,
+          strokeColor: '#c0392b',
+          strokeOpacity: 0.9,
+          strokeStyle: 'solid',
+        })
 
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full rounded-xl bg-gray-100" style={{ height: 160 }}>
-      <rect width={W} height={H} fill="#e8f0e8" rx="12" />
-      <polyline points={points} fill="none" stroke="#c0392b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={toX(coords[0][1])} cy={toY(coords[0][0])} r="5" fill="#2ecc71" />
-      <circle cx={toX(coords[coords.length-1][1])} cy={toY(coords[coords.length-1][0])} r="5" fill="#c0392b" />
-    </svg>
-  )
-}
+        new window.kakao.maps.Marker({
+          map,
+          position: path[0],
+        })
 
-// 고도 그래프
-const ElevationChart = ({ polyline }: { polyline: string }) => {
-  // polyline에서 고도 데이터 추출은 별도 저장 필요 — 여기선 샘플 표시
-  return null
+        const bounds = new window.kakao.maps.LatLngBounds()
+        path.forEach(p => bounds.extend(p))
+        map.setBounds(bounds)
+      })
+    }
+
+    if (window.kakao?.maps) {
+      loadMap()
+    } else {
+      const script = document.createElement('script')
+      script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=a0158adb0822ae2bd038e0321530c574&autoload=false`
+      script.onload = loadMap
+      document.head.appendChild(script)
+    }
+  }, [polyline])
+
+  return <div ref={mapRef} className="w-full rounded-xl overflow-hidden" style={{ height: 220 }} />
 }
 
 export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Route[]; userId: string }) {
@@ -170,14 +192,12 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
 
                 <p className="font-bold text-gray-900 mb-3">{route.title}</p>
 
-                {/* 지도 */}
                 {route.polyline && (
                   <div className="mb-3">
-                    <RouteMap polyline={route.polyline} />
+                    <RouteMap polyline={route.polyline} routeId={route.id} />
                   </div>
                 )}
 
-                {/* 스탯 */}
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {route.distance != null && (
                     <div>
