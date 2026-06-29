@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { Download, Heart, MessageCircle, Plus, X, Check, Mountain } from 'lucide-react'
+import { Download, Heart, MessageCircle, Plus, Check } from 'lucide-react'
 import GpxUploadModal from './GpxUploadModal'
 
 interface Route {
@@ -24,17 +24,13 @@ interface Route {
 }
 
 const ACTIVITY_LABELS: Record<string, string> = {
-  run: '🏃 정기런',
+  run: '🏃 로드',
   trail: '🏔️ 트레일',
-  race: '🏁 대회',
-  social: '⚡ 번개런',
 }
 
 const ACTIVITY_COLORS: Record<string, string> = {
   run: 'bg-blue-50 text-blue-700',
   trail: 'bg-purple-50 text-purple-700',
-  race: 'bg-red-50 text-red-700',
-  social: 'bg-yellow-50 text-yellow-700',
 }
 
 const formatDuration = (seconds: number) => {
@@ -51,6 +47,15 @@ const formatPace = (paceSeconds: number) => {
   return `${m}:${String(s).padStart(2, '0')}/km`
 }
 
+const handleDownload = (url: string, title: string) => {
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${title}.gpx`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
 export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Route[]; userId: string }) {
   const supabase = createClient()
   const router = useRouter()
@@ -65,19 +70,12 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
     setLoadingLike(routeId)
     const route = routes.find(r => r.id === routeId)
     const isLiked = route?.likes.some(l => l.user_id === userId)
-
     if (isLiked) {
       await supabase.from('gpx_likes').delete().eq('route_id', routeId).eq('user_id', userId)
-      setRoutes(routes.map(r => r.id === routeId
-        ? { ...r, likes: r.likes.filter(l => l.user_id !== userId) }
-        : r
-      ))
+      setRoutes(routes.map(r => r.id === routeId ? { ...r, likes: r.likes.filter(l => l.user_id !== userId) } : r))
     } else {
       await supabase.from('gpx_likes').insert({ route_id: routeId, user_id: userId })
-      setRoutes(routes.map(r => r.id === routeId
-        ? { ...r, likes: [...r.likes, { user_id: userId }] }
-        : r
-      ))
+      setRoutes(routes.map(r => r.id === routeId ? { ...r, likes: [...r.likes, { user_id: userId }] } : r))
     }
     setLoadingLike(null)
   }
@@ -103,10 +101,7 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
     await supabase.from('gpx_comments').insert({ route_id: routeId, user_id: userId, content })
     setCommentInputs(prev => ({ ...prev, [routeId]: '' }))
     await loadComments(routeId)
-    setRoutes(routes.map(r => r.id === routeId
-      ? { ...r, comments: [...r.comments, { id: 'new' }] }
-      : r
-    ))
+    setRoutes(routes.map(r => r.id === routeId ? { ...r, comments: [...r.comments, { id: 'new' }] } : r))
   }
 
   const handleUploadComplete = () => {
@@ -136,7 +131,6 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
             const isLiked = route.likes.some(l => l.user_id === userId)
             return (
               <div key={route.id} className="card">
-                {/* 헤더 */}
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-9 h-9 rounded-full bg-[#c0392b] flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden">
                     {route.author?.avatar_url
@@ -152,10 +146,8 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
                   </span>
                 </div>
 
-                {/* 제목 */}
                 <p className="font-bold text-gray-900 mb-3">{route.title}</p>
 
-                {/* 스탯 */}
                 <div className="grid grid-cols-4 gap-2 mb-3">
                   {route.distance != null && (
                     <div>
@@ -176,29 +168,26 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
                     </div>
                   )}
                   {route.elevation_gain != null && (
-                    <div className="flex flex-col">
+                    <div>
                       <p className="text-base font-bold text-gray-900">{route.elevation_gain}m</p>
                       <p className="text-xs text-gray-400">누적 상승</p>
                     </div>
                   )}
                 </div>
 
-                {/* 설명 */}
                 {route.description && (
                   <p className="text-sm text-gray-500 mb-3">{route.description}</p>
                 )}
 
-                {/* 액션 버튼 */}
                 <div className="flex gap-2 pt-3 border-t border-gray-100">
                   {route.gpx_url && (
-                    
-                      href={route.gpx_url}
-                      download
+                    <button
+                      onClick={() => handleDownload(route.gpx_url!, route.title)}
                       className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg flex-1 justify-center hover:bg-gray-700 transition-colors"
                     >
                       <Download size={14} />
                       GPX 다운로드
-                    </a>
+                    </button>
                   )}
                   <button
                     onClick={() => handleLike(route.id)}
@@ -217,7 +206,6 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
                   </button>
                 </div>
 
-                {/* 댓글 섹션 */}
                 {showComments[route.id] && (
                   <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
                     {(comments[route.id] ?? []).map((c: any) => (
