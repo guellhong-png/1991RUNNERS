@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Profile } from '@/types'
-import { Calendar, Megaphone, Wallet, Settings, LogOut, Home, Users, BookOpen, ClipboardList, Archive, ChevronDown, ChevronRight, Newspaper, Star, MessageSquare, Menu, X, Pencil, Camera, Trophy } from 'lucide-react'
+import { Calendar, Megaphone, Wallet, Settings, LogOut, Home, Users, BookOpen, ClipboardList, Archive, ChevronDown, ChevronRight, Newspaper, Star, MessageSquare, Menu, X, Pencil, Camera, Trophy, Map } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 
 export default function Sidebar({ profile }: { profile: Profile }) {
@@ -159,6 +159,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
         <NavItem href="/attendance" icon={<ClipboardList size={18} />} label="뛰꼬양 출석표" />
         <NavItem href="/finance" icon={<Wallet size={18} />} label="회비 내역" />
         <NavItem href="/archive" icon={<Archive size={18} />} label="뛰꼬양 자료실" />
+        <NavItem href="/gpx" icon={<Map size={18} />} label="GPX 코스 모음" />
         <NavItem href="/admin" icon={<Settings size={18} />} label="관리자" adminOnly />
       </nav>
       <div className="p-4 border-t border-white/10">
