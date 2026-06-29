@@ -101,6 +101,40 @@ const RouteMap = ({ polyline, routeId }: { polyline: string; routeId: string }) 
   return <div ref={mapRef} className="w-full rounded-xl overflow-hidden" style={{ height: 220 }} />
 }
 
+const ElevationChart = ({ elevationProfile, gain, loss }: { elevationProfile: string; gain: number | null; loss: number | null }) => {
+  const eles: number[] = JSON.parse(elevationProfile)
+  if (eles.length < 2) return null
+
+  const W = 400
+  const H = 80
+  const pad = 8
+  const minEle = Math.min(...eles)
+  const maxEle = Math.max(...eles)
+  const range = maxEle - minEle || 1
+
+  const toX = (i: number) => pad + (i / (eles.length - 1)) * (W - pad * 2)
+  const toY = (e: number) => H - pad - ((e - minEle) / range) * (H - pad * 2)
+
+  const points = eles.map((e, i) => `${toX(i)},${toY(e)}`).join(' ')
+  const areaPoints = `${toX(0)},${H} ${points} ${toX(eles.length - 1)},${H}`
+
+  return (
+    <div className="mb-3">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs text-gray-400">고도 프로필</p>
+        <div className="flex gap-3 text-xs text-gray-500">
+          <span>최저 {Math.round(minEle)}m</span>
+          <span>최고 {Math.round(maxEle)}m</span>
+        </div>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full rounded-lg bg-gray-50" style={{ height: 70 }}>
+        <polygon points={areaPoints} fill="#fecaca" fillOpacity="0.5" />
+        <polyline points={points} fill="none" stroke="#c0392b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  )
+}
+
 export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Route[]; userId: string }) {
   const supabase = createClient()
   const router = useRouter()
@@ -193,12 +227,23 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
 
                 <p className="font-bold text-gray-900 mb-3">{route.title}</p>
 
+                {/* 카카오맵 */}
                 {route.polyline && (
                   <div className="mb-3">
                     <RouteMap polyline={route.polyline} routeId={route.id} />
                   </div>
                 )}
 
+                {/* 고도 그래프 */}
+                {route.elevation_profile && (
+                  <ElevationChart
+                    elevationProfile={route.elevation_profile}
+                    gain={route.elevation_gain}
+                    loss={route.elevation_loss}
+                  />
+                )}
+
+                {/* 스탯 */}
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {route.distance != null && (
                     <div>
