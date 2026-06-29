@@ -20,6 +20,7 @@ interface Route {
   avg_pace: number | null
   elevation_gain: number | null
   elevation_loss: number | null
+  elevation_profile: string | null
   activity_type: string
   gpx_url: string | null
   polyline: string | null
