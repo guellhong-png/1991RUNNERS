@@ -7,7 +7,7 @@ export default async function GpxPage() {
 
   const { data: routes } = await supabase
     .from('gpx_routes')
-    .select('*, author:profiles!user_id(id, name, avatar_url), likes:gpx_likes(user_id), comments:gpx_comments(id)')
+    .select('*, author:profiles(id, name, avatar_url), likes:gpx_likes(user_id), comments:gpx_comments(id)')
     .order('created_at', { ascending: false })
 
   return (
