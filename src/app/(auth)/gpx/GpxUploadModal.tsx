@@ -118,7 +118,8 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
     setLoading(true)
 
     const file = fileRef.current.files[0]
-    const path = `${userId}/${Date.now()}_${file.name}`
+    const ext = file.name.split('.').pop()
+    const path = `${userId}/${Date.now()}.${ext}`
     const { error: uploadError } = await supabase.storage.from('gpx-files').upload(path, file)
     if (uploadError) { alert('파일 업로드 실패: ' + uploadError.message); setLoading(false); return }
 
