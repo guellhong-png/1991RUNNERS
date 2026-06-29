@@ -21,12 +21,10 @@ const parseGPX = (text: string) => {
   if (trkpts.length === 0) return null
 
   let distance = 0
-  let elevationGain = 0
   let prevLat: number | null = null
   let prevLon: number | null = null
-  let prevEle: number | null = null
-
   const times: Date[] = []
+  const eles: number[] = []
 
   trkpts.forEach(pt => {
     const lat = parseFloat(pt.getAttribute('lat') || '0')
@@ -34,6 +32,7 @@ const parseGPX = (text: string) => {
     const ele = parseFloat(pt.querySelector('ele')?.textContent || '0')
     const timeStr = pt.querySelector('time')?.textContent
     if (timeStr) times.push(new Date(timeStr))
+    eles.push(ele)
 
     if (prevLat !== null && prevLon !== null) {
       const R = 6371000
@@ -42,22 +41,34 @@ const parseGPX = (text: string) => {
       const a = Math.sin(dLat/2) ** 2 + Math.cos(prevLat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLon/2) ** 2
       distance += R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
     }
-
-    if (prevEle !== null && ele > prevEle) {
-      elevationGain += ele - prevEle
-    }
-
     prevLat = lat
     prevLon = lon
-    prevEle = ele
   })
+
+  // 이동 평균 스무딩 (window=5)
+  const w = 5
+  const smoothed: number[] = []
+  for (let i = 0; i < eles.length; i++) {
+    const start = Math.max(0, i - w)
+    const end = Math.min(eles.length - 1, i + w)
+    const avg = eles.slice(start, end + 1).reduce((a, b) => a + b, 0) / (end - start + 1)
+    smoothed.push(avg)
+  }
+
+  let elevationGain = 0
+  let elevationLoss = 0
+  for (let i = 1; i < smoothed.length; i++) {
+    const diff = smoothed[i] - smoothed[i - 1]
+    if (diff > 0) elevationGain += diff
+    else elevationLoss += Math.abs(diff)
+  }
 
   const distanceKm = distance / 1000
   let duration = null
   let avgPace = null
 
   if (times.length >= 2) {
-    duration = Math.round((times[times.length-1].getTime() - times[0].getTime()) / 1000)
+    duration = Math.round((times[times.length - 1].getTime() - times[0].getTime()) / 1000)
     if (distanceKm > 0) avgPace = Math.round(duration / distanceKm)
   }
 
@@ -66,6 +77,7 @@ const parseGPX = (text: string) => {
     duration,
     avg_pace: avgPace,
     elevation_gain: Math.round(elevationGain),
+    elevation_loss: Math.round(elevationLoss),
   }
 }
 
@@ -74,7 +86,7 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [fileName, setFileName] = useState('')
-  const [parsed, setParsed] = useState<{ distance: number; duration: number | null; avg_pace: number | null; elevation_gain: number } | null>(null)
+  const [parsed, setParsed] = useState<{ distance: number; duration: number | null; avg_pace: number | null; elevation_gain: number; elevation_loss: number } | null>(null)
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -96,12 +108,6 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
     const s = seconds % 60
     if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
     return `${m}:${String(s).padStart(2, '0')}`
-  }
-
-  const formatPace = (paceSeconds: number) => {
-    const m = Math.floor(paceSeconds / 60)
-    const s = paceSeconds % 60
-    return `${m}:${String(s).padStart(2, '0')}/km`
   }
 
   const handleSubmit = async () => {
@@ -127,6 +133,7 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
       duration: parsed?.duration ?? null,
       avg_pace: parsed?.avg_pace ?? null,
       elevation_gain: parsed?.elevation_gain ?? null,
+      elevation_loss: parsed?.elevation_loss ?? null,
       gpx_url: urlData.publicUrl,
     })
 
@@ -143,7 +150,6 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
         </div>
         <div className="p-5 space-y-4">
-          {/* 활동 종류 */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-2 block">활동 종류</label>
             <div className="flex gap-2">
@@ -157,7 +163,6 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
             </div>
           </div>
 
-          {/* 제목 */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">제목 *</label>
             <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
@@ -165,7 +170,6 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b]" />
           </div>
 
-          {/* 설명 */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">설명</label>
             <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
@@ -174,7 +178,6 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b] resize-none" />
           </div>
 
-          {/* GPX 파일 */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">GPX 파일 *</label>
             <input ref={fileRef} type="file" accept=".gpx" className="hidden" onChange={handleFileChange} />
@@ -185,10 +188,9 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
             </button>
           </div>
 
-          {/* 파싱 결과 미리보기 */}
           {parsed && (
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-              <p className="text-xs font-medium text-gray-500 mb-2">📊 GPX에서 읽어온 데이터</p>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-xs font-medium text-gray-500 mb-3">📊 GPX에서 읽어온 데이터</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-sm font-bold text-gray-900">{parsed.distance} km</p>
@@ -200,15 +202,13 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
                     <p className="text-xs text-gray-400">시간</p>
                   </div>
                 )}
-                {parsed.avg_pace && (
-                  <div>
-                    <p className="text-sm font-bold text-gray-900">{formatPace(parsed.avg_pace)}</p>
-                    <p className="text-xs text-gray-400">평균 페이스</p>
-                  </div>
-                )}
                 <div>
-                  <p className="text-sm font-bold text-gray-900">{parsed.elevation_gain} m</p>
-                  <p className="text-xs text-gray-400">누적 상승</p>
+                  <p className="text-sm font-bold text-gray-900">↑ {parsed.elevation_gain} m</p>
+                  <p className="text-xs text-gray-400">총 상승</p>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">↓ {parsed.elevation_loss} m</p>
+                  <p className="text-xs text-gray-400">총 하강</p>
                 </div>
               </div>
             </div>
