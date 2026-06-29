@@ -14,27 +14,94 @@ interface Props {
   onComplete: () => void
 }
 
+const parseGPX = (text: string) => {
+  const parser = new DOMParser()
+  const xml = parser.parseFromString(text, 'application/xml')
+  const trkpts = Array.from(xml.querySelectorAll('trkpt'))
+  if (trkpts.length === 0) return null
+
+  let distance = 0
+  let elevationGain = 0
+  let prevLat: number | null = null
+  let prevLon: number | null = null
+  let prevEle: number | null = null
+
+  const times: Date[] = []
+
+  trkpts.forEach(pt => {
+    const lat = parseFloat(pt.getAttribute('lat') || '0')
+    const lon = parseFloat(pt.getAttribute('lon') || '0')
+    const ele = parseFloat(pt.querySelector('ele')?.textContent || '0')
+    const timeStr = pt.querySelector('time')?.textContent
+    if (timeStr) times.push(new Date(timeStr))
+
+    if (prevLat !== null && prevLon !== null) {
+      const R = 6371000
+      const dLat = (lat - prevLat) * Math.PI / 180
+      const dLon = (lon - prevLon) * Math.PI / 180
+      const a = Math.sin(dLat/2) ** 2 + Math.cos(prevLat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLon/2) ** 2
+      distance += R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+    }
+
+    if (prevEle !== null && ele > prevEle) {
+      elevationGain += ele - prevEle
+    }
+
+    prevLat = lat
+    prevLon = lon
+    prevEle = ele
+  })
+
+  const distanceKm = distance / 1000
+  let duration = null
+  let avgPace = null
+
+  if (times.length >= 2) {
+    duration = Math.round((times[times.length-1].getTime() - times[0].getTime()) / 1000)
+    if (distanceKm > 0) avgPace = Math.round(duration / distanceKm)
+  }
+
+  return {
+    distance: Math.round(distanceKm * 100) / 100,
+    duration,
+    avg_pace: avgPace,
+    elevation_gain: Math.round(elevationGain),
+  }
+}
+
 export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
   const supabase = createClient()
   const fileRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [fileName, setFileName] = useState('')
+  const [parsed, setParsed] = useState<{ distance: number; duration: number | null; avg_pace: number | null; elevation_gain: number } | null>(null)
   const [form, setForm] = useState({
     title: '',
     description: '',
     activity_type: 'run',
-    distance: '',
-    duration_h: '',
-    duration_m: '',
-    duration_s: '',
-    avg_pace_m: '',
-    avg_pace_s: '',
-    elevation_gain: '',
   })
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) setFileName(file.name)
+    if (!file) return
+    setFileName(file.name)
+    const text = await file.text()
+    const result = parseGPX(text)
+    if (result) setParsed(result)
+  }
+
+  const formatDuration = (seconds: number) => {
+    const h = Math.floor(seconds / 3600)
+    const m = Math.floor((seconds % 3600) / 60)
+    const s = seconds % 60
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    return `${m}:${String(s).padStart(2, '0')}`
+  }
+
+  const formatPace = (paceSeconds: number) => {
+    const m = Math.floor(paceSeconds / 60)
+    const s = paceSeconds % 60
+    return `${m}:${String(s).padStart(2, '0')}/km`
   }
 
   const handleSubmit = async () => {
@@ -51,23 +118,15 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
 
     const { data: urlData } = supabase.storage.from('gpx-files').getPublicUrl(path)
 
-    const durationSeconds = form.duration_h || form.duration_m || form.duration_s
-      ? (parseInt(form.duration_h || '0') * 3600) + (parseInt(form.duration_m || '0') * 60) + parseInt(form.duration_s || '0')
-      : null
-
-    const avgPaceSeconds = form.avg_pace_m || form.avg_pace_s
-      ? (parseInt(form.avg_pace_m || '0') * 60) + parseInt(form.avg_pace_s || '0')
-      : null
-
     const { error } = await supabase.from('gpx_routes').insert({
       user_id: userId,
       title: form.title,
       description: form.description || null,
       activity_type: form.activity_type,
-      distance: form.distance ? parseFloat(form.distance) : null,
-      duration: durationSeconds,
-      avg_pace: avgPaceSeconds,
-      elevation_gain: form.elevation_gain ? parseFloat(form.elevation_gain) : null,
+      distance: parsed?.distance ?? null,
+      duration: parsed?.duration ?? null,
+      avg_pace: parsed?.avg_pace ?? null,
+      elevation_gain: parsed?.elevation_gain ?? null,
       gpx_url: urlData.publicUrl,
     })
 
@@ -115,49 +174,6 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b] resize-none" />
           </div>
 
-          {/* 거리 */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">거리 (km)</label>
-            <input type="number" step="0.01" value={form.distance} onChange={e => setForm({ ...form, distance: e.target.value })}
-              placeholder="예: 25.66"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b]" />
-          </div>
-
-          {/* 시간 */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">시간</label>
-            <div className="flex gap-2 items-center">
-              <input type="number" value={form.duration_h} onChange={e => setForm({ ...form, duration_h: e.target.value })}
-                placeholder="시" className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b]" />
-              <span className="text-gray-400 text-sm">:</span>
-              <input type="number" value={form.duration_m} onChange={e => setForm({ ...form, duration_m: e.target.value })}
-                placeholder="분" className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b]" />
-              <span className="text-gray-400 text-sm">:</span>
-              <input type="number" value={form.duration_s} onChange={e => setForm({ ...form, duration_s: e.target.value })}
-                placeholder="초" className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b]" />
-            </div>
-          </div>
-
-          {/* 평균 페이스 */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">평균 페이스 (/km)</label>
-            <div className="flex gap-2 items-center">
-              <input type="number" value={form.avg_pace_m} onChange={e => setForm({ ...form, avg_pace_m: e.target.value })}
-                placeholder="분" className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b]" />
-              <span className="text-gray-400 text-sm">:</span>
-              <input type="number" value={form.avg_pace_s} onChange={e => setForm({ ...form, avg_pace_s: e.target.value })}
-                placeholder="초" className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b]" />
-            </div>
-          </div>
-
-          {/* 누적 상승 고도 */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">누적 상승 고도 (m)</label>
-            <input type="number" value={form.elevation_gain} onChange={e => setForm({ ...form, elevation_gain: e.target.value })}
-              placeholder="예: 320"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b]" />
-          </div>
-
           {/* GPX 파일 */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">GPX 파일 *</label>
@@ -168,6 +184,35 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
               <span className="text-sm">{fileName || 'GPX 파일 선택'}</span>
             </button>
           </div>
+
+          {/* 파싱 결과 미리보기 */}
+          {parsed && (
+            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+              <p className="text-xs font-medium text-gray-500 mb-2">📊 GPX에서 읽어온 데이터</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">{parsed.distance} km</p>
+                  <p className="text-xs text-gray-400">거리</p>
+                </div>
+                {parsed.duration && (
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{formatDuration(parsed.duration)}</p>
+                    <p className="text-xs text-gray-400">시간</p>
+                  </div>
+                )}
+                {parsed.avg_pace && (
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">{formatPace(parsed.avg_pace)}</p>
+                    <p className="text-xs text-gray-400">평균 페이스</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-bold text-gray-900">{parsed.elevation_gain} m</p>
+                  <p className="text-xs text-gray-400">누적 상승</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2 p-5 border-t">
