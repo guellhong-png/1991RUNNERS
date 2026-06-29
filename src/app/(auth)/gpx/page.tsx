@@ -1,6 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
 import GpxFeed from './GpxFeed'
 
 export default async function GpxPage() {
