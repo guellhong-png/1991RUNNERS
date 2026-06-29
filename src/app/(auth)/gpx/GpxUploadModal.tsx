@@ -25,6 +25,7 @@ const parseGPX = (text: string) => {
   let prevLon: number | null = null
   const times: Date[] = []
   const eles: number[] = []
+  const coords: [number, number][] = []
 
   trkpts.forEach(pt => {
     const lat = parseFloat(pt.getAttribute('lat') || '0')
@@ -33,6 +34,7 @@ const parseGPX = (text: string) => {
     const timeStr = pt.querySelector('time')?.textContent
     if (timeStr) times.push(new Date(timeStr))
     eles.push(ele)
+    coords.push([lat, lon])
 
     if (prevLat !== null && prevLon !== null) {
       const R = 6371000
@@ -72,12 +74,24 @@ const parseGPX = (text: string) => {
     if (distanceKm > 0) avgPace = Math.round(duration / distanceKm)
   }
 
+  // 좌표 샘플링 (최대 500개)
+  const step = Math.max(1, Math.floor(coords.length / 500))
+  const sampledCoords = coords.filter((_, i) => i % step === 0)
+  const polyline = JSON.stringify(sampledCoords)
+
+  // 고도 샘플링 (최대 200개)
+  const eleStep = Math.max(1, Math.floor(smoothed.length / 200))
+  const sampledEles = smoothed.filter((_, i) => i % eleStep === 0)
+  const elevationProfile = JSON.stringify(sampledEles)
+
   return {
     distance: Math.round(distanceKm * 100) / 100,
     duration,
     avg_pace: avgPace,
     elevation_gain: Math.round(elevationGain),
     elevation_loss: Math.round(elevationLoss),
+    polyline,
+    elevationProfile,
   }
 }
 
@@ -86,7 +100,7 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [fileName, setFileName] = useState('')
-  const [parsed, setParsed] = useState<{ distance: number; duration: number | null; avg_pace: number | null; elevation_gain: number; elevation_loss: number } | null>(null)
+  const [parsed, setParsed] = useState<any>(null)
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -135,6 +149,7 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
       avg_pace: parsed?.avg_pace ?? null,
       elevation_gain: parsed?.elevation_gain ?? null,
       elevation_loss: parsed?.elevation_loss ?? null,
+      polyline: parsed?.polyline ?? null,
       gpx_url: urlData.publicUrl,
     })
 
