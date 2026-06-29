@@ -150,8 +150,9 @@ export default function GpxUploadModal({ userId, onClose, onComplete }: Props) {
       elevation_gain: parsed?.elevation_gain ?? null,
       elevation_loss: parsed?.elevation_loss ?? null,
       polyline: parsed?.polyline ?? null,
+      elevation_profile: parsed?.elevationProfile ?? null,
       gpx_url: urlData.publicUrl,
-    })
+})
 
     if (error) { alert('저장 실패: ' + error.message); setLoading(false); return }
     setLoading(false)
