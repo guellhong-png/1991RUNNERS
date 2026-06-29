@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { format } from 'date-fns'
@@ -18,6 +18,7 @@ interface Route {
   elevation_loss: number | null
   activity_type: string
   gpx_url: string | null
+  polyline: string | null
   created_at: string
   author: { id: string; name: string; avatar_url?: string }
   likes: { user_id: string }[]
@@ -41,6 +42,40 @@ const handleDownload = (url: string, title: string) => {
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
+}
+
+// SVG 경로 지도
+const RouteMap = ({ polyline }: { polyline: string }) => {
+  const coords: [number, number][] = JSON.parse(polyline)
+  if (coords.length < 2) return null
+
+  const lats = coords.map(c => c[0])
+  const lons = coords.map(c => c[1])
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats)
+  const minLon = Math.min(...lons), maxLon = Math.max(...lons)
+
+  const W = 400, H = 200
+  const pad = 16
+
+  const toX = (lon: number) => pad + ((lon - minLon) / (maxLon - minLon || 1)) * (W - pad * 2)
+  const toY = (lat: number) => H - pad - ((lat - minLat) / (maxLat - minLat || 1)) * (H - pad * 2)
+
+  const points = coords.map(c => `${toX(c[1])},${toY(c[0])}`).join(' ')
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full rounded-xl bg-gray-100" style={{ height: 160 }}>
+      <rect width={W} height={H} fill="#e8f0e8" rx="12" />
+      <polyline points={points} fill="none" stroke="#c0392b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={toX(coords[0][1])} cy={toY(coords[0][0])} r="5" fill="#2ecc71" />
+      <circle cx={toX(coords[coords.length-1][1])} cy={toY(coords[coords.length-1][0])} r="5" fill="#c0392b" />
+    </svg>
+  )
+}
+
+// 고도 그래프
+const ElevationChart = ({ polyline }: { polyline: string }) => {
+  // polyline에서 고도 데이터 추출은 별도 저장 필요 — 여기선 샘플 표시
+  return null
 }
 
 export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Route[]; userId: string }) {
@@ -135,6 +170,14 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
 
                 <p className="font-bold text-gray-900 mb-3">{route.title}</p>
 
+                {/* 지도 */}
+                {route.polyline && (
+                  <div className="mb-3">
+                    <RouteMap polyline={route.polyline} />
+                  </div>
+                )}
+
+                {/* 스탯 */}
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   {route.distance != null && (
                     <div>
