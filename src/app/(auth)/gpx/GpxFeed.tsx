@@ -27,7 +27,7 @@ interface Route {
     created_at: string
     author: { id: string; name: string; avatar_url?: string }
     likes: { user_id: string }[]
-    comments: { id: string }[]
+    comments: { id: string }[
 }
 
 const ACTIVITY_LABELS: Record<string, string> = {
@@ -177,8 +177,8 @@ const ElevationChart = ({
                                                   fontSize="9" fill="#9ca3af"
                                                 >
                                     {Math.round(val)}
-                                  </text>text>
-                      </g>g>
+                                  </text>
+                      </g>
                     ))}
                         <polygon points={areaPoints} fill="#fecaca" fillOpacity="0.5" />
                         <polyline
@@ -207,8 +207,8 @@ const ElevationChart = ({
                                                   fontSize="9" fill="#9ca3af"
                                                 >
                                     {label}
-                                  </text>text>
-                      </g>g>
+                                  </text>
+                      </g>
                     ))}
                         <line
                                     x1={padL} y1={padT}
