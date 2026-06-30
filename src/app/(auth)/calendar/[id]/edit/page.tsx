@@ -31,6 +31,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [form, setForm] = useState({
     title: '', description: '', location: '', location_url: '',
     event_date: '', event_time: '', event_type: 'run',
+    rsvp_deadline_date: '', rsvp_deadline_time: '',
   })
   const [locationQuery, setLocationQuery] = useState('')
   const [locationResults, setLocationResults] = useState<KakaoPlace[]>([])
@@ -51,6 +52,13 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         const date = new Date(data.event_date)
         const dateStr = date.toISOString().split('T')[0]
         const timeStr = date.toTimeString().slice(0, 5)
+        let rsvpDateStr = ''
+        let rsvpTimeStr = ''
+        if (data.rsvp_deadline) {
+          const rsvpDate = new Date(data.rsvp_deadline)
+          rsvpDateStr = rsvpDate.toISOString().split('T')[0]
+          rsvpTimeStr = rsvpDate.toTimeString().slice(0, 5)
+        }
         setForm({
           title: data.title ?? '',
           description: data.description ?? '',
@@ -59,6 +67,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           event_date: dateStr,
           event_time: timeStr,
           event_type: data.event_type ?? 'run',
+          rsvp_deadline_date: rsvpDateStr,
+          rsvp_deadline_time: rsvpTimeStr,
         })
         setLocationQuery(data.location ?? '')
         setLocationSelected(true)
@@ -143,6 +153,9 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       event_type: form.event_type,
       image_url,
       is_edited: true,
+      rsvp_deadline: form.rsvp_deadline_date && form.rsvp_deadline_time
+        ? `${form.rsvp_deadline_date}T${form.rsvp_deadline_time}:00`
+        : null,
     }).eq('id', eventId)
 
     if (!error) {
@@ -229,6 +242,18 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
             {form.location_url && (
               <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><MapPin size={12} />장소가 선택되었습니다</p>
             )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">참석 투표 마감 (선택)</label>
+            <div className="grid grid-cols-2 gap-4">
+              <input type="date" value={form.rsvp_deadline_date}
+                onChange={(e) => setForm({ ...form, rsvp_deadline_date: e.target.value })}
+                className="input" />
+              <input type="time" value={form.rsvp_deadline_time}
+                onChange={(e) => setForm({ ...form, rsvp_deadline_time: e.target.value })}
+                className="input" />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">설정하면 마감 시간 이후 참석 여부를 변경할 수 없어요</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">상세 내용</label>
