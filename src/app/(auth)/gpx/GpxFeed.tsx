@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { Download, Heart, MessageCircle, Plus, Check } from 'lucide-react'
+import { Download, Heart, MessageCircle, Plus, Check, MoreVertical, Pencil, Trash2, X } from 'lucide-react'
 import GpxUploadModal from './GpxUploadModal'
 
 declare global {
@@ -39,6 +39,11 @@ const ACTIVITY_COLORS: Record<string, string> = {
   run: 'bg-blue-50 text-blue-700',
   trail: 'bg-purple-50 text-purple-700',
 }
+
+const ACTIVITY_TYPES = [
+  { value: 'run', label: '🏃 로드' },
+  { value: 'trail', label: '🏔️ 트레일' },
+]
 
 const handleDownload = (url: string, title: string) => {
   const link = document.createElement('a')
@@ -104,7 +109,6 @@ const RouteMap = ({ polyline, routeId }: { polyline: string; routeId: string }) 
   return <div ref={mapRef} className="w-full rounded-xl overflow-hidden" style={{ height: 220 }} />
 }
 
-// 캔버스 기반 고도 차트 - 텍스트 찌그러짐 없음, 컨테이너 너비 100% 맞춤
 const ElevationChart = ({
   elevationProfile,
   gain,
@@ -153,11 +157,9 @@ const ElevationChart = ({
     const toX = (i: number) => padL + (i / (eles.length - 1)) * chartW
     const toY = (e: number) => padT + chartH - ((e - minEle) / range) * chartH
 
-    // 배경
     ctx.fillStyle = '#f9fafb'
     ctx.fillRect(0, 0, W, H)
 
-    // Y축 그리드 + 레이블
     const yTickCount = 4
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
@@ -180,7 +182,6 @@ const ElevationChart = ({
       ctx.fillText(Math.round(val).toString(), padL - 5, y)
     }
 
-    // 면적 채우기 (초록)
     ctx.beginPath()
     ctx.moveTo(toX(0), padT + chartH)
     for (let i = 0; i < eles.length; i++) {
@@ -191,7 +192,6 @@ const ElevationChart = ({
     ctx.fillStyle = 'rgba(134, 239, 172, 0.45)'
     ctx.fill()
 
-    // 라인 (초록)
     ctx.beginPath()
     ctx.moveTo(toX(0), toY(eles[0]))
     for (let i = 1; i < eles.length; i++) {
@@ -204,7 +204,6 @@ const ElevationChart = ({
     ctx.setLineDash([])
     ctx.stroke()
 
-    // X축 베이스라인
     ctx.strokeStyle = '#9ca3af'
     ctx.lineWidth = 1
     ctx.beginPath()
@@ -212,13 +211,11 @@ const ElevationChart = ({
     ctx.lineTo(W - padR, padT + chartH)
     ctx.stroke()
 
-    // Y축 베이스라인
     ctx.beginPath()
     ctx.moveTo(padL, padT)
     ctx.lineTo(padL, padT + chartH)
     ctx.stroke()
 
-    // X축 틱 + 레이블
     const totalDist = distance ?? 0
     const xTickCount = 5
     ctx.font = `${11}px -apple-system, sans-serif`
@@ -246,7 +243,6 @@ const ElevationChart = ({
       ctx.fillText(label, x, padT + chartH + 6)
     }
 
-    // 단위 레이블
     ctx.font = `bold ${10}px -apple-system, sans-serif`
     ctx.fillStyle = '#22c55e'
     ctx.textAlign = 'right'
@@ -280,7 +276,91 @@ const ElevationChart = ({
   )
 }
 
-export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Route[]; userId: string }) {
+const EditModal = ({
+  route,
+  onClose,
+  onSave,
+}: {
+  route: Route
+  onClose: () => void
+  onSave: (updated: Partial<Route>) => void
+}) => {
+  const supabase = createClient()
+  const [form, setForm] = useState({
+    title: route.title,
+    description: route.description ?? '',
+    activity_type: route.activity_type,
+  })
+  const [loading, setLoading] = useState(false)
+
+  const handleSave = async () => {
+    if (!form.title.trim()) { alert('제목을 입력해주세요'); return }
+    setLoading(true)
+    const { error } = await supabase
+      .from('gpx_routes')
+      .update({
+        title: form.title.trim(),
+        description: form.description.trim() || null,
+        activity_type: form.activity_type,
+      })
+      .eq('id', route.id)
+    setLoading(false)
+    if (error) { alert('수정 실패: ' + error.message); return }
+    onSave({ title: form.title.trim(), description: form.description.trim() || null, activity_type: form.activity_type })
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div className="flex items-center justify-between p-5 border-b">
+          <h2 className="text-lg font-bold text-gray-900">GPX 수정</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">활동 종류</label>
+            <div className="flex gap-2">
+              {ACTIVITY_TYPES.map(t => (
+                <button key={t.value} type="button"
+                  onClick={() => setForm({ ...form, activity_type: t.value })}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${form.activity_type === t.value ? 'bg-[#c0392b] text-white' : 'bg-gray-100 text-gray-600'}`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">제목 *</label>
+            <input
+              value={form.title}
+              onChange={e => setForm({ ...form, title: e.target.value })}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b]"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">설명</label>
+            <textarea
+              value={form.description}
+              onChange={e => setForm({ ...form, description: e.target.value })}
+              rows={3}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b] resize-none"
+            />
+          </div>
+        </div>
+        <div className="flex gap-2 p-5 border-t">
+          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-500 hover:bg-gray-50">취소</button>
+          <button onClick={handleSave} disabled={loading}
+            className="flex-1 py-2.5 bg-[#c0392b] text-white rounded-xl text-sm font-medium hover:bg-[#a93226] disabled:opacity-50">
+            {loading ? '저장 중...' : '저장'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function GpxFeed({ routes: initialRoutes, userId, userRole }: { routes: Route[]; userId: string; userRole: string }) {
   const supabase = createClient()
   const router = useRouter()
   const [routes, setRoutes] = useState(initialRoutes)
@@ -289,6 +369,11 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
   const [showComments, setShowComments] = useState<Record<string, boolean>>({})
   const [comments, setComments] = useState<Record<string, any[]>>({})
   const [loadingLike, setLoadingLike] = useState<string | null>(null)
+  const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const [editRoute, setEditRoute] = useState<Route | null>(null)
+
+  const isAdmin = userRole === 'admin'
+  const canManage = (route: Route) => isAdmin || route.author.id === userId
 
   const handleLike = async (routeId: string) => {
     setLoadingLike(routeId)
@@ -302,6 +387,18 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
       setRoutes(routes.map(r => r.id === routeId ? { ...r, likes: [...r.likes, { user_id: userId }] } : r))
     }
     setLoadingLike(null)
+  }
+
+  const handleDelete = async (routeId: string) => {
+    if (!confirm('정말 삭제하시겠어요?')) return
+    setOpenMenu(null)
+    const { error } = await supabase.from('gpx_routes').delete().eq('id', routeId)
+    if (error) { alert('삭제 실패: ' + error.message); return }
+    setRoutes(routes.filter(r => r.id !== routeId))
+  }
+
+  const handleEditSave = (routeId: string, updated: Partial<Route>) => {
+    setRoutes(routes.map(r => r.id === routeId ? { ...r, ...updated } : r))
   }
 
   const loadComments = async (routeId: string) => {
@@ -333,6 +430,12 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
     router.refresh()
   }
 
+  useEffect(() => {
+    const handler = () => setOpenMenu(null)
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [])
+
   return (
     <>
       <button
@@ -353,6 +456,7 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
         <div className="space-y-4">
           {routes.map(route => {
             const isLiked = route.likes.some(l => l.user_id === userId)
+            const showMenu = canManage(route)
             return (
               <div key={route.id} className="card">
                 <div className="flex items-center gap-3 mb-3">
@@ -368,6 +472,34 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${ACTIVITY_COLORS[route.activity_type] || 'bg-gray-100 text-gray-600'}`}>
                     {ACTIVITY_LABELS[route.activity_type] || route.activity_type}
                   </span>
+                  {showMenu && (
+                    <div className="relative" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => setOpenMenu(openMenu === route.id ? null : route.id)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                      {openMenu === route.id && (
+                        <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-28">
+                          <button
+                            onClick={() => { setEditRoute(route); setOpenMenu(null) }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            <Pencil size={14} />
+                            수정
+                          </button>
+                          <button
+                            onClick={() => handleDelete(route.id)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50"
+                          >
+                            <Trash2 size={14} />
+                            삭제
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <p className="font-bold text-gray-900 mb-3">{route.title}</p>
@@ -482,6 +614,14 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
           userId={userId}
           onClose={() => setShowUpload(false)}
           onComplete={handleUploadComplete}
+        />
+      )}
+
+      {editRoute && (
+        <EditModal
+          route={editRoute}
+          onClose={() => setEditRoute(null)}
+          onSave={(updated) => handleEditSave(editRoute.id, updated)}
         />
       )}
     </>
