@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { RichTextEditor } from '@/lib/RichTextEditor'
 
 export default function NewNewsPage() {
   const router = useRouter()
@@ -25,7 +26,7 @@ export default function NewNewsPage() {
       <div className="card">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div><label className="block text-sm font-medium text-gray-700 mb-1">제목 *</label><input value={form.title} onChange={(e) => setForm({...form, title: e.target.value})} className="input" required /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">내용 *</label><textarea value={form.content} onChange={(e) => setForm({...form, content: e.target.value})} className="input h-52 resize-none" required /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">내용 *</label><RichTextEditor value={form.content} onChange={(v) => setForm({ ...form, content: v })} rows={10} /></div>
           <div className="flex gap-3 pt-2"><Link href="/board/news" className="btn-secondary flex-1 text-center py-3">취소</Link><button type="submit" disabled={loading} className="btn-primary flex-1 py-3 disabled:opacity-50">{loading ? '등록 중...' : '등록'}</button></div>
         </form>
       </div>
