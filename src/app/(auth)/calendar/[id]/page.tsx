@@ -8,6 +8,25 @@ import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/types'
 import AttendanceButtons from './AttendanceButtons'
 import DeleteEventButton from './DeleteEventButton'
 import KakaoShareButton from './KakaoShareButton'
+
+// 서버(Vercel)의 시스템 타임존이 UTC라서, new Date(...)를 그대로 format()하면
+// 한국 시간이 아니라 UTC로 표시되는 문제가 있다. DB에는 UTC로 저장돼 있으므로
+// 항상 KST(UTC+9)로 9시간을 더한 뒤 포맷하도록 보정한다.
+function formatKst(isoString: string, pattern: string) {
+  const utcDate = new Date(isoString)
+  const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000)
+  // getTime()으로 보정된 시각의 UTC 필드를 그대로 로컬 시각처럼 사용하기 위해
+  // Date.UTC 기반 값을 다시 로컬 필드로 읽되, format()은 시스템 로컬 기준으로 동작하므로
+  // UTC 표기 함수를 직접 사용해 안전하게 포맷한다.
+  const y = kstDate.getUTCFullYear()
+  const m = kstDate.getUTCMonth()
+  const d = kstDate.getUTCDate()
+  const h = kstDate.getUTCHours()
+  const min = kstDate.getUTCMinutes()
+  const s = kstDate.getUTCSeconds()
+  const safeLocalDate = new Date(y, m, d, h, min, s)
+  return format(safeLocalDate, pattern, { locale: ko })
+}
 import EventActions from './EventActions'
 import QRButton from './QRButton'
 
@@ -62,7 +81,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           </div>
           <KakaoShareButton
             title={event.title}
-            description={`${format(new Date(event.event_date), 'M월 d일 (E) HH:mm', { locale: ko })} · ${event.location}`}
+            description={`${formatKst(event.event_date, 'M월 d일 (E) HH:mm')} · ${event.location}`}
             imageUrl={event.image_url}
             eventId={id}
           />
@@ -77,7 +96,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         <div className="space-y-3 mb-6">
           <div className="flex items-center gap-3 text-gray-700">
             <Clock size={18} className="text-gray-400 shrink-0" />
-            <span>{format(new Date(event.event_date), 'yyyy년 M월 d일 (E) HH:mm', { locale: ko })}</span>
+            <span>{formatKst(event.event_date, 'yyyy년 M월 d일 (E) HH:mm')}</span>
           </div>
           <div className="flex items-center gap-3 text-gray-700">
             <MapPin size={18} className="text-gray-400 shrink-0" />
@@ -123,7 +142,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               <p className="text-sm font-medium text-gray-700">참여 여부를 알려주세요</p>
               {event.rsvp_deadline && (
                 <span className={`text-xs ${rsvpClosed ? 'text-red-500' : 'text-gray-400'}`}>
-                  {rsvpClosed ? '투표 마감됨' : `${format(new Date(event.rsvp_deadline), 'M월 d일 HH:mm', { locale: ko })}까지 투표`}
+                  {rsvpClosed ? '투표 마감됨' : `${formatKst(event.rsvp_deadline, 'M월 d일 HH:mm')}까지 투표`}
                 </span>
               )}
             </div>
