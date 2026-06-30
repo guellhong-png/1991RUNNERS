@@ -26,6 +26,14 @@ function toLocalTimeStr(date: Date) {
   return `${h}:${min}`
 }
 
+// "YYYY-MM-DD"와 "HH:mm"을 한국 로컬 시간으로 해석해 정확한 UTC ISO 문자열로 변환
+function localToUtcIso(dateStr: string, timeStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const [h, min] = timeStr.split(':').map(Number)
+  const utcDate = new Date(Date.UTC(y, m - 1, d, h - 9, min, 0))
+  return utcDate.toISOString()
+}
+
 interface KakaoPlace {
   id: string
   place_name: string
@@ -162,12 +170,12 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       description: form.description,
       location: form.location,
       location_url: form.location_url,
-      event_date: `${form.event_date}T${form.event_time}:00+09:00`,
+      event_date: localToUtcIso(form.event_date, form.event_time),
       event_type: form.event_type,
       image_url,
       is_edited: true,
       rsvp_deadline: form.rsvp_deadline_date && form.rsvp_deadline_time
-        ? `${form.rsvp_deadline_date}T${form.rsvp_deadline_time}:00+09:00`
+        ? localToUtcIso(form.rsvp_deadline_date, form.rsvp_deadline_time)
         : null,
     }).eq('id', eventId)
 
