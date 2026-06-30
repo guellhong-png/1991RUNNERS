@@ -144,22 +144,29 @@ export default function Sidebar({ profile }: { profile: Profile }) {
           </button>
           {boardOpen && (
             <div className="ml-6 mt-1 space-y-1">
-              <Link href="/board/news" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/news') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
-                <Newspaper size={14} />뛰꼬양 소식
-              </Link>
               <Link href="/board/notice" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/notice') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
                 <Star size={14} />뛰꼬양 필독사항
               </Link>
-              <Link href="/board/free" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/free') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
-                <MessageSquare size={14} />자유게시판
+              <Link href="/board/news" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/news') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+                <Newspaper size={14} />뛰꼬양 소식
+              </Link>
+              <Link href="/board/photo" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/photo') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+                <Camera size={14} />뛰꼬양 사진 자료실
+              </Link>
+              <Link href="/board/history" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/history') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+                <ClipboardList size={14} />뛰꼬양 히스토리
+              </Link>
+              <Link href="/board/archive" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/archive') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+                <Archive size={14} />뛰꼬양 자료실
+              </Link>
+              <Link href="/gpx" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/gpx') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+                <Map size={14} />GPX 코스 모음
               </Link>
             </div>
           )}
         </div>
         <NavItem href="/attendance" icon={<ClipboardList size={18} />} label="뛰꼬양 출석표" />
         <NavItem href="/finance" icon={<Wallet size={18} />} label="회비 내역" />
-        <NavItem href="/archive" icon={<Archive size={18} />} label="뛰꼬양 자료실" />
-        <NavItem href="/gpx" icon={<Map size={18} />} label="GPX 코스 모음" />
         <NavItem href="/admin" icon={<Settings size={18} />} label="관리자" adminOnly />
       </nav>
       <div className="p-4 border-t border-white/10">
