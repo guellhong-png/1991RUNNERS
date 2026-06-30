@@ -8,10 +8,12 @@ import PostActions from './PostActions'
 const CATEGORY_BACK: Record<string, string> = {
   news: '/board/news',
   notice: '/board/notice',
-  free: '/board/free',
+  photo: '/board/photo',
+  history: '/board/history',
+  archive: '/board/archive',
 }
 const CATEGORY_LABEL: Record<string, string> = {
-  news: '뛰꼬양 소식', notice: '뛰꼬양 필독사항', free: '자유게시판',
+  news: '뛰꼬양 소식', notice: '뛰꼬양 필독사항', photo: '뛰꼬양 사진 자료실', history: '뛰꼬양 히스토리', archive: '뛰꼬양 자료실',
 }
 
 export default async function PostDetailPage({ params }: { params: Promise<{ id: string }> }) {
