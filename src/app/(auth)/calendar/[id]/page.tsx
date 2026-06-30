@@ -32,6 +32,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const canDelete = profile?.role === 'admin' || event.created_by === user?.id
   const canEdit = profile?.role === 'admin' || event.created_by === user?.id
   const isPast = new Date(event.event_date) < new Date()
+  const rsvpClosed = event.rsvp_deadline ? new Date(event.rsvp_deadline) < new Date() : false
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -118,15 +119,26 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         {/* 참여 여부 */}
         {!isPast && (
           <div className="border-t border-gray-100 pt-4 mt-4">
-            <p className="text-sm font-medium text-gray-700 mb-3">참여 여부를 알려주세요</p>
-            <AttendanceButtons
-              eventId={event.id}
-              userId={user!.id}
-              currentStatus={myAttendance?.status ?? null}
-              attendanceId={myAttendance?.id ?? null}
-              hasAfterparty={event.has_afterparty ?? false}
-              currentAfterpartyStatus={myAttendance?.afterparty_status ?? null}
-            />
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-medium text-gray-700">참여 여부를 알려주세요</p>
+              {event.rsvp_deadline && (
+                <span className={`text-xs ${rsvpClosed ? 'text-red-500' : 'text-gray-400'}`}>
+                  {rsvpClosed ? '투표 마감됨' : `${format(new Date(event.rsvp_deadline), 'M월 d일 HH:mm', { locale: ko })}까지 투표`}
+                </span>
+              )}
+            </div>
+            {rsvpClosed ? (
+              <p className="text-sm text-gray-400 bg-gray-50 rounded-lg px-4 py-3">투표 마감 시간이 지나 참여 여부를 변경할 수 없어요</p>
+            ) : (
+              <AttendanceButtons
+                eventId={event.id}
+                userId={user!.id}
+                currentStatus={myAttendance?.status ?? null}
+                attendanceId={myAttendance?.id ?? null}
+                hasAfterparty={event.has_afterparty ?? false}
+                currentAfterpartyStatus={myAttendance?.afterparty_status ?? null}
+              />
+            )}
           </div>
         )}
       </div>
