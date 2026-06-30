@@ -9,6 +9,16 @@ declare global {
   interface Window { Kakao: any }
 }
 
+// "YYYY-MM-DD"와 "HH:mm"을 한국 로컬 시간으로 해석해 정확한 UTC ISO 문자열로 변환
+// (문자열에 +09:00을 직접 붙이는 방식은 일부 환경에서 무시될 수 있어, Date 객체 생성 방식을 사용)
+function localToUtcIso(dateStr: string, timeStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const [h, min] = timeStr.split(':').map(Number)
+  // KST(UTC+9) 기준 로컬 시각을 UTC로 직접 환산: UTC = KST - 9시간
+  const utcDate = new Date(Date.UTC(y, m - 1, d, h - 9, min, 0))
+  return utcDate.toISOString()
+}
+
 const EVENT_TYPES = [
   { value: 'run', label: '정기런' },
   { value: 'ddayrun', label: '뛰꼬양데이' },
@@ -130,11 +140,11 @@ export default function NewEventPage() {
     const { data: inserted, error } = await supabase.from('events').insert({
       title: form.title, description: form.description,
       location: form.location, location_url: form.location_url,
-      event_date: `${form.event_date}T${form.event_time}:00+09:00`,
+      event_date: localToUtcIso(form.event_date, form.event_time),
       event_type: form.event_type, created_by: user?.id, image_url,
       has_afterparty: form.has_afterparty,
       rsvp_deadline: form.rsvp_deadline_date && form.rsvp_deadline_time
-        ? `${form.rsvp_deadline_date}T${form.rsvp_deadline_time}:00+09:00`
+        ? localToUtcIso(form.rsvp_deadline_date, form.rsvp_deadline_time)
         : null,
     }).select('id, title, image_url').single()
     if (!error && inserted) {
