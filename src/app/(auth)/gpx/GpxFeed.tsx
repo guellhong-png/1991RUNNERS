@@ -404,6 +404,7 @@ function EditModal({
 
 function RouteCard({
   route,
+  userId,
   canManageRoute,
   isLiked,
   isLikeLoading,
@@ -420,6 +421,7 @@ function RouteCard({
   onSubmitComment,
 }: {
   route: Route
+  userId: string
   canManageRoute: boolean
   isLiked: boolean
   isLikeLoading: boolean
@@ -435,6 +437,19 @@ function RouteCard({
   onCommentInputChange: (value: string) => void
   onSubmitComment: () => void
 }) {
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isMenuOpen) return
+    function handleOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onToggleMenu()
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [isMenuOpen, onToggleMenu])
+
   return (
     <div className="card">
       <div className="flex items-center gap-3 mb-3">
@@ -453,9 +468,11 @@ function RouteCard({
           {ACTIVITY_LABELS[route.activity_type] || route.activity_type}
         </span>
         {canManageRoute && (
-          <div className="relative">
+          <div className="relative" ref={menuRef}>
             <button
+              type="button"
               onClick={(e) => {
+                e.preventDefault()
                 e.stopPropagation()
                 onToggleMenu()
               }}
@@ -464,19 +481,24 @@ function RouteCard({
               <MoreVertical size={16} />
             </button>
             {isMenuOpen && (
-              <div
-                className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-28"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-28">
                 <button
-                  onClick={onEdit}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit()
+                  }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   <Pencil size={14} />
                   수정
                 </button>
                 <button
-                  onClick={onDelete}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete()
+                  }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50"
                 >
                   <Trash2 size={14} />
@@ -694,14 +716,6 @@ export default function GpxFeed({
     router.refresh()
   }
 
-  useEffect(() => {
-    function handler() {
-      setOpenMenu(null)
-    }
-    document.addEventListener('click', handler)
-    return () => document.removeEventListener('click', handler)
-  }, [])
-
   return (
     <>
       <button
@@ -728,6 +742,7 @@ export default function GpxFeed({
               <RouteCard
                 key={route.id}
                 route={route}
+                userId={userId}
                 canManageRoute={canManage(route)}
                 isLiked={isLiked}
                 isLikeLoading={loadingLike === route.id}
