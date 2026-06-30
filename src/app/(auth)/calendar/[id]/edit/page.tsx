@@ -162,12 +162,12 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       description: form.description,
       location: form.location,
       location_url: form.location_url,
-      event_date: `${form.event_date}T${form.event_time}:00`,
+      event_date: `${form.event_date}T${form.event_time}:00+09:00`,
       event_type: form.event_type,
       image_url,
       is_edited: true,
       rsvp_deadline: form.rsvp_deadline_date && form.rsvp_deadline_time
-        ? `${form.rsvp_deadline_date}T${form.rsvp_deadline_time}:00`
+        ? `${form.rsvp_deadline_date}T${form.rsvp_deadline_time}:00+09:00`
         : null,
     }).eq('id', eventId)
 
