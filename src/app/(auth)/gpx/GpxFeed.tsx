@@ -472,16 +472,22 @@ export default function GpxFeed({ routes: initialRoutes, userId, userRole }: { r
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${ACTIVITY_COLORS[route.activity_type] || 'bg-gray-100 text-gray-600'}`}>
                     {ACTIVITY_LABELS[route.activity_type] || route.activity_type}
                   </span>
-                  {showMenu && (
-                    <div className="relative" onClick={e => e.stopPropagation()}>
+                 {showMenu && (
+                    <div className="relative">
                       <button
-                        onClick={() => setOpenMenu(openMenu === route.id ? null : route.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenMenu(openMenu === route.id ? null : route.id)
+                        }}
                         className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
                       >
                         <MoreVertical size={16} />
                       </button>
                       {openMenu === route.id && (
-                        <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-28">
+                        <div
+                          className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-gray-100 py-1 w-28"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button
                             onClick={() => { setEditRoute(route); setOpenMenu(null) }}
                             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -500,7 +506,6 @@ export default function GpxFeed({ routes: initialRoutes, userId, userRole }: { r
                       )}
                     </div>
                   )}
-                </div>
 
                 <p className="font-bold text-gray-900 mb-3">{route.title}</p>
 
