@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Pencil, Check, X, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { RichText } from '@/lib/richtext'
+import { RichTextEditor } from '@/lib/RichTextEditor'
 
 interface Comment {
   id: string
@@ -101,12 +103,7 @@ export default function PostActions({ post, currentUserId, currentUserRole, init
 
         {editingPost ? (
           <div className="space-y-3">
-            <textarea
-              value={postContent}
-              onChange={e => setPostContent(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg p-3 text-sm text-gray-700 resize-none focus:outline-none focus:border-[#c0392b]"
-              rows={8}
-            />
+            <RichTextEditor value={postContent} onChange={setPostContent} rows={8} />
             <div className="flex gap-2 justify-end">
               <button onClick={() => setEditingPost(false)} className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700">
                 <X size={14} />취소
@@ -117,7 +114,7 @@ export default function PostActions({ post, currentUserId, currentUserRole, init
             </div>
           </div>
         ) : (
-          <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{postContent}</p>
+          <RichText content={postContent} className="text-gray-700 leading-relaxed" />
         )}
       </div>
 
