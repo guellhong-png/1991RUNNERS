@@ -130,11 +130,11 @@ export default function NewEventPage() {
     const { data: inserted, error } = await supabase.from('events').insert({
       title: form.title, description: form.description,
       location: form.location, location_url: form.location_url,
-      event_date: `${form.event_date}T${form.event_time}:00`,
+      event_date: `${form.event_date}T${form.event_time}:00+09:00`,
       event_type: form.event_type, created_by: user?.id, image_url,
       has_afterparty: form.has_afterparty,
       rsvp_deadline: form.rsvp_deadline_date && form.rsvp_deadline_time
-        ? `${form.rsvp_deadline_date}T${form.rsvp_deadline_time}:00`
+        ? `${form.rsvp_deadline_date}T${form.rsvp_deadline_time}:00+09:00`
         : null,
     }).select('id, title, image_url').single()
     if (!error && inserted) {
