@@ -27,7 +27,7 @@ interface Route {
     created_at: string
     author: { id: string; name: string; avatar_url?: string }
     likes: { user_id: string }[]
-    comments: { id: string }[
+    comments: { id: string }[]
 }
 
 const ACTIVITY_LABELS: Record<string, string> = {
