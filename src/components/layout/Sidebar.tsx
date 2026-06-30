@@ -130,7 +130,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
       </div>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         <NavItem href="/dashboard" icon={<Home size={18} />} label="홈" />
-        <NavItem href="/about" icon={<BookOpen size={18} />} label="뛰꼬양 소개" />
+        <NavItem href="/board/notice" icon={<Star size={18} />} label="뛰꼬양 필독사항" />
         <NavItem href="/profile" icon={<Users size={18} />} label="회원 프로필" />
         <NavItem href="/races" icon={<Trophy size={18} />} label="대회 일정" />
         <NavItem href="/calendar" icon={<Calendar size={18} />} label="뛰꼬양 캘린더" badge={newEventCount} />
@@ -144,8 +144,8 @@ export default function Sidebar({ profile }: { profile: Profile }) {
           </button>
           {boardOpen && (
             <div className="ml-6 mt-1 space-y-1">
-              <Link href="/board/notice" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/notice') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
-                <Star size={14} />뛰꼬양 필독사항
+              <Link href="/about" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/about') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+                <BookOpen size={14} />뛰꼬양 소개
               </Link>
               <Link href="/board/news" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/news') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
                 <Newspaper size={14} />뛰꼬양 소식
