@@ -13,6 +13,19 @@ const EVENT_TYPES = [
   { value: 'social', label: '벙개' },
 ]
 
+// 로컬 타임존 기준으로 YYYY-MM-DD, HH:mm 문자열을 만든다 (UTC 변환으로 인한 날짜/시간 어긋남 방지)
+function toLocalDateStr(date: Date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+function toLocalTimeStr(date: Date) {
+  const h = String(date.getHours()).padStart(2, '0')
+  const min = String(date.getMinutes()).padStart(2, '0')
+  return `${h}:${min}`
+}
+
 interface KakaoPlace {
   id: string
   place_name: string
@@ -50,14 +63,14 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       const { data } = await supabase.from('events').select('*').eq('id', id).single()
       if (data) {
         const date = new Date(data.event_date)
-        const dateStr = date.toISOString().split('T')[0]
-        const timeStr = date.toTimeString().slice(0, 5)
+        const dateStr = toLocalDateStr(date)
+        const timeStr = toLocalTimeStr(date)
         let rsvpDateStr = ''
         let rsvpTimeStr = ''
         if (data.rsvp_deadline) {
           const rsvpDate = new Date(data.rsvp_deadline)
-          rsvpDateStr = rsvpDate.toISOString().split('T')[0]
-          rsvpTimeStr = rsvpDate.toTimeString().slice(0, 5)
+          rsvpDateStr = toLocalDateStr(rsvpDate)
+          rsvpTimeStr = toLocalTimeStr(rsvpDate)
         }
         setForm({
           title: data.title ?? '',
