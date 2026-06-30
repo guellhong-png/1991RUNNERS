@@ -104,6 +104,7 @@ const RouteMap = ({ polyline, routeId }: { polyline: string; routeId: string }) 
   return <div ref={mapRef} className="w-full rounded-xl overflow-hidden" style={{ height: 220 }} />
 }
 
+// 캔버스 기반 고도 차트 - 텍스트 찌그러짐 없음, 컨테이너 너비 100% 맞춤
 const ElevationChart = ({
   elevationProfile,
   gain,
@@ -115,140 +116,165 @@ const ElevationChart = ({
   loss: number | null
   distance: number | null
 }) => {
-  const eles: number[] = JSON.parse(elevationProfile)
-  if (eles.length < 2) return null
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
-  const padL = 38
-  const padR = 10
-  const padT = 12
-  const padB = 28
-  const H = 140
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const container = containerRef.current
+    if (!canvas || !container) return
 
-  const minEle = Math.min(...eles)
-  const maxEle = Math.max(...eles)
-  const range = maxEle - minEle || 1
+    const eles: number[] = JSON.parse(elevationProfile)
+    if (eles.length < 2) return
 
-  // viewBox를 100으로 정규화해서 실제 컨테이너 너비에 맞게 자동 스케일
-  const VW = 100
-  const chartW = VW - padL - padR
-  const chartH = H - padT - padB
+    const dpr = window.devicePixelRatio || 1
+    const W = container.clientWidth
+    const H = 130
 
-  const toX = (i: number) => padL + (i / (eles.length - 1)) * chartW
-  const toY = (e: number) => padT + chartH - ((e - minEle) / range) * chartH
+    canvas.width = W * dpr
+    canvas.height = H * dpr
+    canvas.style.width = W + 'px'
+    canvas.style.height = H + 'px'
 
-  const points = eles.map((e, i) => `${toX(i).toFixed(2)},${toY(e).toFixed(2)}`).join(' ')
-  const areaPoints = `${toX(0).toFixed(2)},${(padT + chartH).toFixed(2)} ${points} ${toX(eles.length - 1).toFixed(2)},${(padT + chartH).toFixed(2)}`
+    const ctx = canvas.getContext('2d')!
+    ctx.scale(dpr, dpr)
 
-  const yTickCount = 4
-  const yTicks = Array.from({ length: yTickCount + 1 }, (_, i) => {
-    const val = minEle + (range * i) / yTickCount
-    return { val, y: toY(val) }
-  })
+    const padL = 44
+    const padR = 12
+    const padT = 10
+    const padB = 28
+    const chartW = W - padL - padR
+    const chartH = H - padT - padB
 
-  const totalDist = distance ?? 0
-  const xTickCount = 5
-  const xTicks = Array.from({ length: xTickCount + 1 }, (_, i) => {
-    const ratio = i / xTickCount
-    const idx = Math.round(ratio * (eles.length - 1))
-    const label = totalDist > 0
-      ? `${(totalDist * ratio).toFixed(1)}`
-      : `${Math.round(ratio * 100)}%`
-    return { x: toX(idx), label }
-  })
+    const minEle = Math.min(...eles)
+    const maxEle = Math.max(...eles)
+    const range = maxEle - minEle || 1
+
+    const toX = (i: number) => padL + (i / (eles.length - 1)) * chartW
+    const toY = (e: number) => padT + chartH - ((e - minEle) / range) * chartH
+
+    // 배경
+    ctx.fillStyle = '#f9fafb'
+    ctx.fillRect(0, 0, W, H)
+
+    // Y축 그리드 + 레이블
+    const yTickCount = 4
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'middle'
+    ctx.font = `${11}px -apple-system, sans-serif`
+
+    for (let i = 0; i <= yTickCount; i++) {
+      const val = minEle + (range * i) / yTickCount
+      const y = toY(val)
+
+      ctx.strokeStyle = i === 0 ? '#d1d5db' : '#e5e7eb'
+      ctx.lineWidth = 1
+      ctx.setLineDash(i === 0 ? [] : [3, 3])
+      ctx.beginPath()
+      ctx.moveTo(padL, y)
+      ctx.lineTo(W - padR, y)
+      ctx.stroke()
+      ctx.setLineDash([])
+
+      ctx.fillStyle = '#9ca3af'
+      ctx.fillText(Math.round(val).toString(), padL - 5, y)
+    }
+
+    // 면적 채우기 (초록)
+    ctx.beginPath()
+    ctx.moveTo(toX(0), padT + chartH)
+    for (let i = 0; i < eles.length; i++) {
+      ctx.lineTo(toX(i), toY(eles[i]))
+    }
+    ctx.lineTo(toX(eles.length - 1), padT + chartH)
+    ctx.closePath()
+    ctx.fillStyle = 'rgba(134, 239, 172, 0.45)'
+    ctx.fill()
+
+    // 라인 (초록)
+    ctx.beginPath()
+    ctx.moveTo(toX(0), toY(eles[0]))
+    for (let i = 1; i < eles.length; i++) {
+      ctx.lineTo(toX(i), toY(eles[i]))
+    }
+    ctx.strokeStyle = '#22c55e'
+    ctx.lineWidth = 1.5
+    ctx.lineJoin = 'round'
+    ctx.lineCap = 'round'
+    ctx.setLineDash([])
+    ctx.stroke()
+
+    // X축 베이스라인
+    ctx.strokeStyle = '#9ca3af'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(padL, padT + chartH)
+    ctx.lineTo(W - padR, padT + chartH)
+    ctx.stroke()
+
+    // Y축 베이스라인
+    ctx.beginPath()
+    ctx.moveTo(padL, padT)
+    ctx.lineTo(padL, padT + chartH)
+    ctx.stroke()
+
+    // X축 틱 + 레이블
+    const totalDist = distance ?? 0
+    const xTickCount = 5
+    ctx.font = `${11}px -apple-system, sans-serif`
+    ctx.fillStyle = '#9ca3af'
+    ctx.textBaseline = 'top'
+
+    for (let i = 0; i <= xTickCount; i++) {
+      const ratio = i / xTickCount
+      const x = padL + ratio * chartW
+      const label = totalDist > 0
+        ? `${(totalDist * ratio).toFixed(1)}`
+        : `${Math.round(ratio * 100)}%`
+
+      ctx.strokeStyle = '#9ca3af'
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.moveTo(x, padT + chartH)
+      ctx.lineTo(x, padT + chartH + 4)
+      ctx.stroke()
+
+      if (i === 0) ctx.textAlign = 'left'
+      else if (i === xTickCount) ctx.textAlign = 'right'
+      else ctx.textAlign = 'center'
+
+      ctx.fillText(label, x, padT + chartH + 6)
+    }
+
+    // 단위 레이블
+    ctx.font = `bold ${10}px -apple-system, sans-serif`
+    ctx.fillStyle = '#22c55e'
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'bottom'
+    if (totalDist > 0) ctx.fillText('km', W - padR, H)
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
+    ctx.fillText('m', padL + 2, 2)
+
+  }, [elevationProfile, gain, loss, distance])
 
   return (
     <div className="mb-3">
       <div className="flex items-center justify-between mb-1 px-0.5">
         <p className="text-xs font-medium text-gray-500">고도 프로필</p>
-        <div className="flex gap-3 text-xs text-gray-400">
-          <span>최저 <span className="font-semibold text-gray-600">{Math.round(minEle)}m</span></span>
-          <span>최고 <span className="font-semibold text-gray-600">{Math.round(maxEle)}m</span></span>
-          {gain != null && <span className="text-green-600">↑{gain}m</span>}
-          {loss != null && <span className="text-blue-500">↓{loss}m</span>}
+        <div className="flex gap-2 text-xs text-gray-400 flex-wrap justify-end">
+          <span>최저 <span className="font-semibold text-gray-600">{
+            (() => { try { return Math.round(Math.min(...JSON.parse(elevationProfile))) } catch { return '-' } })()
+          }m</span></span>
+          <span>최고 <span className="font-semibold text-gray-600">{
+            (() => { try { return Math.round(Math.max(...JSON.parse(elevationProfile))) } catch { return '-' } })()
+          }m</span></span>
+          {gain != null && <span className="text-green-500">↑{gain}m</span>}
+          {loss != null && <span className="text-blue-400">↓{loss}m</span>}
         </div>
       </div>
-      <div className="w-full">
-        <svg
-          viewBox={`0 0 ${VW} ${H}`}
-          preserveAspectRatio="none"
-          className="w-full rounded-lg bg-gray-50 border border-gray-100"
-          style={{ height: 130, display: 'block' }}
-        >
-          {/* Y축 그리드 + 레이블 */}
-          {yTicks.map(({ val, y }, i) => (
-            <g key={i}>
-              <line
-                x1={padL} y1={y.toFixed(2)}
-                x2={VW - padR} y2={y.toFixed(2)}
-                stroke="#e5e7eb" strokeWidth="0.4"
-                strokeDasharray={i === 0 ? undefined : '1.5,1.5'}
-              />
-              <text
-                x={padL - 1.5} y={y.toFixed(2)}
-                textAnchor="end" dominantBaseline="middle"
-                fontSize="4.5" fill="#9ca3af"
-              >
-                {Math.round(val)}
-              </text>
-            </g>
-          ))}
-
-          {/* 면적 채우기 */}
-          <polygon points={areaPoints} fill="#fecaca" fillOpacity="0.5" />
-
-          {/* 라인 */}
-          <polyline
-            points={points}
-            fill="none"
-            stroke="#c0392b"
-            strokeWidth="0.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* X축 베이스라인 */}
-          <line
-            x1={padL} y1={padT + chartH}
-            x2={VW - padR} y2={padT + chartH}
-            stroke="#9ca3af" strokeWidth="0.4"
-          />
-
-          {/* Y축 베이스라인 */}
-          <line
-            x1={padL} y1={padT}
-            x2={padL} y2={padT + chartH}
-            stroke="#9ca3af" strokeWidth="0.4"
-          />
-
-          {/* X축 틱 + 레이블 */}
-          {xTicks.map(({ x, label }, i) => (
-            <g key={i}>
-              <line
-                x1={x.toFixed(2)} y1={padT + chartH}
-                x2={x.toFixed(2)} y2={(padT + chartH + 2).toFixed(2)}
-                stroke="#9ca3af" strokeWidth="0.4"
-              />
-              <text
-                x={x.toFixed(2)} y={H - 6}
-                textAnchor={i === 0 ? 'start' : i === xTickCount ? 'end' : 'middle'}
-                fontSize="4.5" fill="#9ca3af"
-              >
-                {label}
-              </text>
-            </g>
-          ))}
-
-          {/* X축 단위 레이블 */}
-          {totalDist > 0 && (
-            <text x={VW - padR} y={H - 1} textAnchor="end" fontSize="3.5" fill="#c0392b">
-              km
-            </text>
-          )}
-          {/* Y축 단위 레이블 */}
-          <text x={padL + 1} y={padT - 2} textAnchor="start" fontSize="3.5" fill="#c0392b">
-            m
-          </text>
-        </svg>
+      <div ref={containerRef} className="w-full rounded-lg overflow-hidden border border-gray-100">
+        <canvas ref={canvasRef} style={{ display: 'block' }} />
       </div>
     </div>
   )
@@ -339,7 +365,7 @@ export default function GpxFeed({ routes: initialRoutes, userId }: { routes: Rou
                     <p className="font-medium text-gray-900 text-sm">{route.author?.name}</p>
                     <p className="text-xs text-gray-400">{format(new Date(route.created_at), 'M월 d일 HH:mm', { locale: ko })}</p>
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ACTIVITY_COLORS[route.activity_type] || 'bg-gray-100 text-gray-600'}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${ACTIVITY_COLORS[route.activity_type] || 'bg-gray-100 text-gray-600'}`}>
                     {ACTIVITY_LABELS[route.activity_type] || route.activity_type}
                   </span>
                 </div>
