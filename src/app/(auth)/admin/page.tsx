@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { Users, Clock } from 'lucide-react'
 import MemberActions from './MemberActions'
+import MemberList from './MemberList'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -10,12 +11,6 @@ export default async function AdminPage() {
   const pending = allProfiles?.filter(p => p.role === 'pending') ?? []
   const members = allProfiles?.filter(p => p.role === 'member') ?? []
   const admins = allProfiles?.filter(p => p.role === 'admin') ?? []
-
-  const RoleBadge = ({ role, grade }: { role: string; grade?: string }) => {
-    if (role === 'admin') return <span className="badge bg-yellow-100 text-yellow-800">운영진</span>
-    if (grade === '정회원') return <span className="badge bg-green-100 text-green-800">정회원</span>
-    return <span className="badge bg-gray-100 text-gray-600">준회원</span>
-  }
 
   return (
     <div className="space-y-8">
@@ -65,28 +60,7 @@ export default async function AdminPage() {
           <Users size={18} className="text-blue-500" />
           <h2 className="font-semibold text-gray-900">전체 회원</h2>
         </div>
-        <div className="card p-0 overflow-hidden">
-          <div className="divide-y divide-gray-50">
-            {[...admins, ...members].map((p) => (
-              <div key={p.id} className="flex flex-col gap-2 px-6 py-4">
-                <div className="flex items-center gap-4">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold shrink-0 ${p.role === 'admin' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>
-                    {p.name?.[0] ?? '?'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-900 truncate">{p.name ?? '이름 없음'}</p>
-                      <RoleBadge role={p.role} grade={p.grade} />
-                    </div>
-                    <p className="text-sm text-gray-500 truncate">{p.email}</p>
-                    {p.phone && <p className="text-xs text-gray-400">{p.phone}</p>}
-                  </div>
-                </div>
-                <MemberActions profileId={p.id} currentRole={p.role} profile={p} />
-              </div>
-            ))}
-          </div>
-        </div>
+        <MemberList profiles={[...admins, ...members]} />
       </div>
     </div>
   )
