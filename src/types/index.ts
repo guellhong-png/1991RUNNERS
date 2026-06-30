@@ -2,7 +2,7 @@ export type Role = 'pending' | 'member' | 'admin'
 export type EventType = 'run' | 'ddayrun' | 'event' | 'race' | 'social'
 export type AttendanceStatus = 'attending' | 'not_attending'
 export type FinanceType = 'income' | 'expense'
-export type PostCategory = 'news' | 'notice' | 'free'
+export type PostCategory = 'news' | 'notice' | 'photo' | 'history' | 'archive'
 
 export interface Profile {
   id: string; email: string; name: string; phone?: string
