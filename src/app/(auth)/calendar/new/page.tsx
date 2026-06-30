@@ -32,6 +32,7 @@ export default function NewEventPage() {
   const [form, setForm] = useState({
     title: '', description: '', location: '', location_url: '',
     event_date: '', event_time: '', event_type: 'run', has_afterparty: false,
+    rsvp_deadline_date: '', rsvp_deadline_time: '',
   })
   const [locationQuery, setLocationQuery] = useState('')
   const [locationResults, setLocationResults] = useState<KakaoPlace[]>([])
@@ -132,6 +133,9 @@ export default function NewEventPage() {
       event_date: `${form.event_date}T${form.event_time}:00`,
       event_type: form.event_type, created_by: user?.id, image_url,
       has_afterparty: form.has_afterparty,
+      rsvp_deadline: form.rsvp_deadline_date && form.rsvp_deadline_time
+        ? `${form.rsvp_deadline_date}T${form.rsvp_deadline_time}:00`
+        : null,
     }).select('id, title, image_url').single()
     if (!error && inserted) {
       setCreatedEvent({ title: inserted.title, id: inserted.id, imageUrl: inserted.image_url })
@@ -244,6 +248,19 @@ export default function NewEventPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">상세 내용</label>
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
                 className="input h-28 resize-none" placeholder="거리, 페이스, 준비물 등" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">참석 투표 마감 (선택)</label>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input type="date" value={form.rsvp_deadline_date}
+                  onChange={(e) => setForm({ ...form, rsvp_deadline_date: e.target.value })}
+                  className="input flex-1" />
+                <input type="time" value={form.rsvp_deadline_time}
+                  onChange={(e) => setForm({ ...form, rsvp_deadline_time: e.target.value })}
+                  className="input flex-1" />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">설정하면 마감 시간 이후 참석 여부를 변경할 수 없어요</p>
             </div>
 
             {/* 뒷풀이 토글 */}
