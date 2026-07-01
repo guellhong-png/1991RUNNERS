@@ -8,6 +8,7 @@ import CalendarNav from './CalendarNav'
 import CalendarBadgeClear from './CalendarBadgeClear'
 import UpcomingEvents from './UpcomingEvents'
 import CalendarMobile from './CalendarMobile'
+import RsvpDeadlineSlider from './RsvpDeadlineSlider'
 import { cookies } from 'next/headers'
 
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string; year?: string }> }) {
@@ -37,6 +38,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     .order('event_date', { ascending: true })
     .limit(10)
 
+  const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000)
+  const { data: rsvpUrgentEvents } = await supabase
+    .from('events')
+    .select('id, title, event_date, rsvp_deadline, creator:profiles!created_by(name)')
+    .gte('rsvp_deadline', now.toISOString())
+    .lte('rsvp_deadline', in48h.toISOString())
+    .order('rsvp_deadline', { ascending: true })
+
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
   const firstDayOfWeek = getDay(monthStart)
   const totalCells = Math.ceil((firstDayOfWeek + days.length) / 7) * 7
@@ -63,7 +72,6 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const cookieStore = await cookies()
   const lastVisited = cookieStore.get('calendar_last_visited')?.value ?? null
 
-  // 모바일용 이벤트 데이터 직렬화
   const serializedEvents = events?.map(e => ({
     id: e.id,
     title: e.title,
@@ -92,7 +100,6 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           ))}
         </div>
 
-        {/* 모바일: 도트 방식 */}
         <div className="md:hidden">
           <CalendarMobile
             events={serializedEvents}
@@ -104,7 +111,6 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           />
         </div>
 
-        {/* PC: 텍스트 방식 */}
         <div className="hidden md:block">
           <div className="grid grid-cols-7">
             {Array.from({ length: totalCells }).map((_, idx) => {
@@ -153,6 +159,10 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           ))}
         </div>
       </div>
+
+      {rsvpUrgentEvents && rsvpUrgentEvents.length > 0 && (
+        <RsvpDeadlineSlider events={rsvpUrgentEvents} />
+      )}
 
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">다가오는 모임</h2>
