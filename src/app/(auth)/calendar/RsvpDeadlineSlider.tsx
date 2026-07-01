@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { Calendar, User } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 
 interface Event {
   id: string
@@ -57,33 +57,25 @@ export default function RsvpDeadlineSlider({ events }: { events: Event[] }) {
         <span className="text-xs font-normal text-orange-500">48시간 이내 마감</span>
       </p>
       <div className="flex gap-3 overflow-x-auto pb-1">
-        {urgentEvents.map((event) => {
-          const creatorName = event.creator?.[0]?.name
-          return (
-            <Link key={event.id} href={`/calendar/${event.id}`}>
-              <div className={`bg-white rounded-lg p-3 min-w-[170px] max-w-[200px] shrink-0 hover:shadow-sm transition-shadow cursor-pointer border ${isUrgent(event.rsvp_deadline) ? 'border-red-100' : 'border-orange-100'}`}>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block mb-2 ${
-                  isUrgent(event.rsvp_deadline)
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-orange-100 text-orange-700'
-                }`}>
-                  {getDdayLabel(event.rsvp_deadline)}
-                </span>
-                <p className="text-xs font-semibold text-gray-900 mb-2 line-clamp-2 leading-snug">{event.title}</p>
-                <div className="flex items-center gap-2 text-gray-400 text-xs mb-1.5">
-                  <span className="flex items-center gap-1"><Calendar size={11} />{formatEventDate(event.event_date)}</span>
-                  {creatorName && (
-                    <>
-                      <span className="text-gray-200">·</span>
-                      <span className="flex items-center gap-1"><User size={11} />{creatorName}</span>
-                    </>
-                  )}
-                </div>
-                <p className="text-xs text-orange-500 font-medium">{formatDeadline(event.rsvp_deadline)}</p>
+        {urgentEvents.map((event) => (
+          <Link key={event.id} href={`/calendar/${event.id}`}>
+            <div className={`bg-white rounded-lg p-3 min-w-[160px] max-w-[190px] shrink-0 hover:shadow-sm transition-shadow cursor-pointer border ${isUrgent(event.rsvp_deadline) ? 'border-red-100' : 'border-orange-100'}`}>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block mb-2 ${
+                isUrgent(event.rsvp_deadline)
+                  ? 'bg-red-100 text-red-700'
+                  : 'bg-orange-100 text-orange-700'
+              }`}>
+                {getDdayLabel(event.rsvp_deadline)}
+              </span>
+              <p className="text-xs font-semibold text-gray-900 mb-2 line-clamp-2 leading-snug">{event.title}</p>
+              <div className="flex items-center gap-1 text-gray-400 text-xs mb-1.5">
+                <Calendar size={11} />
+                <span>{formatEventDate(event.event_date)}</span>
               </div>
-            </Link>
-          )
-        })}
+              <p className="text-xs text-orange-500 font-medium">{formatDeadline(event.rsvp_deadline)}</p>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   )
