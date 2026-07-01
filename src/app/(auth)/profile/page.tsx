@@ -46,6 +46,9 @@ export default async function ProfilePage() {
                 <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-16">등급</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-24">가입일</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-16">생일</th>
+                {currentProfile?.role === 'admin' && (
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-28">전화번호</th>
+                )}
                 <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-20">PB (풀)</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-20">PB (10K)</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600 min-w-24">인스타</th>
@@ -72,6 +75,9 @@ export default async function ProfilePage() {
                   <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                     {p.birthday ? format(new Date(p.birthday), 'MM/dd') : '-'}
                   </td>
+                  {currentProfile?.role === 'admin' && (
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{(p as any).phone || '-'}</td>
+                  )}
                   <td className="px-4 py-3 text-gray-700 font-medium whitespace-nowrap">{p.pb_full || '-'}</td>
                   <td className="px-4 py-3 text-gray-700 font-medium whitespace-nowrap">{p.pb_10k || '-'}</td>
                   <td className="px-4 py-3">
