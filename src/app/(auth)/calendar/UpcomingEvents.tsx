@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { MapPin, Clock, Users } from 'lucide-react'
+import { MapPin, Clock, Users, User } from 'lucide-react'
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/types'
 
 interface Event {
@@ -74,6 +74,9 @@ export default function UpcomingEvents({ events, userId, lastVisited }: {
                     <div className="flex items-center gap-1 text-xs text-gray-500"><Clock size={12} />{format(new Date(event.event_date), 'M월 d일 (E) HH:mm', { locale: ko })}</div>
                     <div className="flex items-center gap-1 text-xs text-gray-500"><MapPin size={12} />{event.location}</div>
                     <div className="flex items-center gap-1 text-xs text-gray-500"><Users size={12} />참여 {attendingCount}명</div>
+                    {event.creator?.name && (
+                      <div className="flex items-center gap-1 text-xs text-gray-500"><User size={12} />호스트 {event.creator.name}</div>
+                    )}
                   </div>
                 </div>
                 <div className="text-right shrink-0">
