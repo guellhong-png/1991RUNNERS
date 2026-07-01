@@ -128,7 +128,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
           </button>
         </div>
       </div>
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-1">
         <NavItem href="/dashboard" icon={<Home size={18} />} label="홈" />
         <NavItem href="/board/notice" icon={<Star size={18} />} label="뛰꼬양 필독사항" />
         <NavItem href="/profile" icon={<Users size={18} />} label="회원 프로필" />
