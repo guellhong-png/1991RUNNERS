@@ -25,15 +25,27 @@ export default async function NoticePage() {
         <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2"><Pin size={16} className="text-[#e94560]" />필독 목록</h2>
         <div className="space-y-2">
           {NOTICE_ITEMS.map((item) => {
-            if (item === 'ABOUT 1991RUNNERS') {
-              return (
-                <Link key={item} href="/about" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#e94560] shrink-0"></span>
-                  <span className="text-sm font-medium text-gray-800">{item}</span>
-                  <span className="ml-auto text-xs text-gray-400">→</span>
-                </Link>
-              )
-            }
+  const post = posts?.find(p => p.title === item)
+  return (
+    <div key={item}>
+      {post ? (
+        <Link href={`/board/${post.id}`} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#e94560] shrink-0"></span>
+          <span className="text-sm font-medium text-gray-800">{item}</span>
+          <span className="ml-auto text-xs text-green-500">✓ 등록됨</span>
+        </Link>
+      ) : (
+        <div className="flex items-center gap-2 p-2 rounded-lg">
+          <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0"></span>
+          <span className="text-sm text-gray-400">{item}</span>
+          {profile?.role === 'admin' && (
+            <Link href={`/board/notice/new?title=${encodeURIComponent(item)}`} className="ml-auto text-xs text-blue-400 hover:underline">작성하기</Link>
+          )}
+        </div>
+      )}
+    </div>
+  )
+})}
 
             const post = posts?.find(p => p.title === item)
             return (
