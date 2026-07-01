@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
+import { redirect } from 'next/navigation'
 
 export default async function HistoryBoardPage() {
   const supabase = await createClient()
@@ -10,6 +11,11 @@ export default async function HistoryBoardPage() {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single()
   const { data: posts } = await supabase.from('posts').select('*, author:profiles!author_id(name, avatar_url)')
     .eq('category', 'history').order('created_at', { ascending: false })
+
+  // 글이 1개뿐이면 바로 상세 페이지로 이동
+  if (posts && posts.length === 1) {
+    redirect(`/board/${posts[0].id}`)
+  }
 
   return (
     <div className="space-y-6">
