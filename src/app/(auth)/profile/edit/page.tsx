@@ -10,7 +10,7 @@ export default function EditProfilePage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
-    name: '', phone: '', birthday: '', pb_full: '', pb_10k: '', instagram: ''
+    name: '', phone: '', birthday: '', pb_full: '', pb_10k: '', instagram: '', joined_at: ''
   })
 
   useEffect(() => {
@@ -25,6 +25,7 @@ export default function EditProfilePage() {
         pb_full: data.pb_full || '',
         pb_10k: data.pb_10k || '',
         instagram: data.instagram || '',
+        joined_at: data.joined_at ? String(data.joined_at).slice(0, 10) : '',
       })
     }
     load()
@@ -41,6 +42,7 @@ export default function EditProfilePage() {
       pb_full: form.pb_full || null,
       pb_10k: form.pb_10k || null,
       instagram: form.instagram || null,
+      joined_at: form.joined_at || null,
     }).eq('id', user!.id)
     router.push('/profile')
     router.refresh()
@@ -68,6 +70,10 @@ export default function EditProfilePage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">생일</label>
             <input type="date" value={form.birthday} onChange={(e) => setForm({...form, birthday: e.target.value})} className="input" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">가입일</label>
+            <input type="date" value={form.joined_at} onChange={(e) => setForm({...form, joined_at: e.target.value})} className="input" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
