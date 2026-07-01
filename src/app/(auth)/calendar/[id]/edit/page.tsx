@@ -52,7 +52,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   const [form, setForm] = useState({
     title: '', description: '', location: '', location_url: '',
     event_date: '', event_time: '', event_type: 'run',
-    rsvp_deadline_date: '', rsvp_deadline_time: '',
+    rsvp_deadline_date: '', rsvp_deadline_time: '', max_attendees: '',
   })
   const [locationQuery, setLocationQuery] = useState('')
   const [locationResults, setLocationResults] = useState<KakaoPlace[]>([])
@@ -90,6 +90,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           event_type: data.event_type ?? 'run',
           rsvp_deadline_date: rsvpDateStr,
           rsvp_deadline_time: rsvpTimeStr,
+          max_attendees: data.max_attendees ? String(data.max_attendees) : '',
         })
         setLocationQuery(data.location ?? '')
         setLocationSelected(true)
@@ -177,6 +178,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       rsvp_deadline: form.rsvp_deadline_date && form.rsvp_deadline_time
         ? localToUtcIso(form.rsvp_deadline_date, form.rsvp_deadline_time)
         : null,
+      max_attendees: form.max_attendees ? parseInt(form.max_attendees) : null,
     }).eq('id', eventId)
 
     if (!error) {
@@ -275,6 +277,18 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 className="input" />
             </div>
             <p className="text-xs text-gray-400 mt-1">설정하면 마감 시간 이후 참석 여부를 변경할 수 없어요</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">정원 (선택)</label>
+            <input
+              type="number"
+              min="1"
+              value={form.max_attendees}
+              onChange={(e) => setForm({ ...form, max_attendees: e.target.value })}
+              placeholder="예: 10 (정원 미설정 시 제한 없음)"
+              className="input"
+            />
+            <p className="text-xs text-gray-400 mt-1">정원이 차면 마감 시간 전이라도 투표가 자동으로 종료돼요</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">상세 내용</label>
