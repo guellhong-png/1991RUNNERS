@@ -25,7 +25,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
     instagram: (profile as any).instagram ?? '',
     pb_full: (profile as any).pb_full ?? '',
     pb_10k: (profile as any).pb_10k ?? '',
-    joined_at: (profile as any).joined_at ?? '',
+    joined_at: (profile as any).joined_at ? String((profile as any).joined_at).slice(0, 10) : '',
   })
 
   useEffect(() => {
@@ -211,16 +211,17 @@ export default function Sidebar({ profile }: { profile: Profile }) {
             </div>
             <div className="p-6 space-y-4">
               {[
-                { label: '이름', key: 'name' },
-                { label: '전화번호', key: 'phone' },
-                { label: '생일 (YYYY-MM-DD)', key: 'birthday' },
-                { label: '가입일 (YYYY-MM-DD)', key: 'joined_at' },
-                { label: '풀마라톤 PB', key: 'pb_full' },
-                { label: '10K PB', key: 'pb_10k' },
-              ].map(({ label, key }) => (
+                { label: '이름', key: 'name', type: 'text' },
+                { label: '전화번호', key: 'phone', type: 'text' },
+                { label: '생일', key: 'birthday', type: 'date' },
+                { label: '가입일', key: 'joined_at', type: 'date' },
+                { label: '풀마라톤 PB', key: 'pb_full', type: 'text' },
+                { label: '10K PB', key: 'pb_10k', type: 'text' },
+              ].map(({ label, key, type }) => (
                 <div key={key}>
                   <label className="text-sm text-gray-600 mb-1 block">{label}</label>
                   <input
+                    type={type}
                     value={(profileForm as any)[key] ?? ''}
                     onChange={e => setProfileForm({ ...profileForm, [key]: e.target.value })}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#c0392b] text-gray-900"
