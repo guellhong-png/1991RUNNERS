@@ -62,7 +62,7 @@ export default function RsvpDeadlineSlider({ events }: { events: Event[] }) {
       </p>
       <div className="flex gap-3 overflow-x-auto pb-1">
         {urgentEvents.map((event) => {
-          const creatorName = Array.isArray(event.creator) ? event.creator[0]?.name : event.creator?.name
+          const creatorName = event.creator?.[0]?.name
           return (
             <Link key={event.id} href={`/calendar/${event.id}`}>
               <div className="bg-white border border-orange-100 rounded-lg p-3 min-w-[160px] shrink-0 hover:shadow-sm transition-shadow cursor-pointer">
