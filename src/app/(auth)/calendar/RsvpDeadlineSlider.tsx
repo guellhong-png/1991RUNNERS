@@ -6,7 +6,7 @@ interface Event {
   title: string
   event_date: string
   rsvp_deadline: string
-  creator: { name: string } | null
+  creator: { name: string }[] | null
 }
 
 export default function RsvpDeadlineSlider({ events }: { events: Event[] }) {
@@ -61,25 +61,28 @@ export default function RsvpDeadlineSlider({ events }: { events: Event[] }) {
         <span className="text-xs font-normal text-orange-500">48시간 이내 마감</span>
       </p>
       <div className="flex gap-3 overflow-x-auto pb-1">
-        {urgentEvents.map((event) => (
-          <Link key={event.id} href={`/calendar/${event.id}`}>
-            <div className="bg-white border border-orange-100 rounded-lg p-3 min-w-[160px] shrink-0 hover:shadow-sm transition-shadow cursor-pointer">
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block mb-2 ${
-                isUrgent(event.rsvp_deadline)
-                  ? 'bg-red-100 text-red-700'
-                  : 'bg-orange-100 text-orange-700'
-              }`}>
-                {getDdayLabel(event.rsvp_deadline)}
-              </span>
-              <p className="text-xs font-medium text-gray-900 mb-1 line-clamp-2">{event.title}</p>
-              <p className="text-xs text-gray-400">{formatEventDate(event.event_date)}</p>
-              {event.creator?.name && (
-                <p className="text-xs text-gray-400 mt-0.5">호스트 {event.creator.name}</p>
-              )}
-              <p className="text-xs text-orange-500 mt-1">{formatDeadline(event.rsvp_deadline)}</p>
-            </div>
-          </Link>
-        ))}
+        {urgentEvents.map((event) => {
+          const creatorName = Array.isArray(event.creator) ? event.creator[0]?.name : event.creator?.name
+          return (
+            <Link key={event.id} href={`/calendar/${event.id}`}>
+              <div className="bg-white border border-orange-100 rounded-lg p-3 min-w-[160px] shrink-0 hover:shadow-sm transition-shadow cursor-pointer">
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full inline-block mb-2 ${
+                  isUrgent(event.rsvp_deadline)
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-orange-100 text-orange-700'
+                }`}>
+                  {getDdayLabel(event.rsvp_deadline)}
+                </span>
+                <p className="text-xs font-medium text-gray-900 mb-1 line-clamp-2">{event.title}</p>
+                <p className="text-xs text-gray-400">{formatEventDate(event.event_date)}</p>
+                {creatorName && (
+                  <p className="text-xs text-gray-400 mt-0.5">호스트 {creatorName}</p>
+                )}
+                <p className="text-xs text-orange-500 mt-1">{formatDeadline(event.rsvp_deadline)}</p>
+              </div>
+            </Link>
+          )
+        })}
       </div>
     </div>
   )
