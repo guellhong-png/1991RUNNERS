@@ -188,7 +188,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
 
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex">
-          <div className="w-64 bg-black text-white flex flex-col min-h-screen overflow-y-auto mt-12">
+          <div className="w-64 bg-black text-white flex flex-col h-screen overflow-y-auto mt-12">
             <SidebarContent />
           </div>
           <div className="flex-1 bg-black/50" onClick={() => setMobileOpen(false)} />
