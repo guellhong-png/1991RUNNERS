@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { createClient } from '@/lib/supabase/server'
 import AttendanceTable from './AttendanceTable'
 import EventTable from './EventTable'
@@ -5,9 +7,12 @@ import EventTable from './EventTable'
 const OFFICIAL_TYPES = ['run', 'ddayrun', 'event', 'race']
 
 function getCurrentPeriod() {
+  // Vercel 서버는 UTC라서 KST(UTC+9) 기준으로 계산
   const now = new Date()
-  const half = now.getMonth() < 6 ? 'H1' : 'H2'
-  return `${now.getFullYear()}-${half}`
+  const kstMonth = new Date(now.getTime() + 9 * 60 * 60 * 1000).getUTCMonth()
+  const kstYear = new Date(now.getTime() + 9 * 60 * 60 * 1000).getUTCFullYear()
+  const half = kstMonth < 6 ? 'H1' : 'H2'
+  return `${kstYear}-${half}`
 }
 
 export default async function AttendancePage() {
