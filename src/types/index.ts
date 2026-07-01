@@ -46,7 +46,7 @@ export const EVENT_TYPE_COLORS: Record<EventType, string> = {
 export const FINANCE_CATEGORIES = ['회비', '대회참가비', '회식', '장비', '적립금', '기타']
 
 export const NOTICE_ITEMS = [
-  'ABOUT 1991RUNNERS',
+  '뛰꼬양 운영사항',
   '뛰꼬양 정회원 조건',
   '뛰꼬양 정기런 참여방법',
   '뛰꼬양 번개 개최방법',
