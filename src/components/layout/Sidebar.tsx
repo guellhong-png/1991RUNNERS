@@ -25,6 +25,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
     instagram: (profile as any).instagram ?? '',
     pb_full: (profile as any).pb_full ?? '',
     pb_10k: (profile as any).pb_10k ?? '',
+    joined_at: (profile as any).joined_at ?? '',
   })
 
   useEffect(() => {
@@ -69,6 +70,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
     const updateData = {
       ...profileForm,
       birthday: profileForm.birthday.trim() === '' ? null : profileForm.birthday,
+      joined_at: profileForm.joined_at.trim() === '' ? null : profileForm.joined_at,
     }
     await supabase.from('profiles').update(updateData).eq('id', profile.id)
     setProfileSaving(false)
@@ -212,6 +214,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
                 { label: '이름', key: 'name' },
                 { label: '전화번호', key: 'phone' },
                 { label: '생일 (YYYY-MM-DD)', key: 'birthday' },
+                { label: '가입일 (YYYY-MM-DD)', key: 'joined_at' },
                 { label: '풀마라톤 PB', key: 'pb_full' },
                 { label: '10K PB', key: 'pb_10k' },
               ].map(({ label, key }) => (
