@@ -161,7 +161,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       </div>
 
       {rsvpUrgentEvents && rsvpUrgentEvents.length > 0 && (
-        <RsvpDeadlineSlider events={rsvpUrgentEvents} />
+        <RsvpDeadlineSlider events={rsvpUrgentEvents as any} />
       )}
 
       <div>
