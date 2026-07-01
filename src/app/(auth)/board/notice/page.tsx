@@ -21,11 +21,20 @@ export default async function NoticePage() {
         )}
       </div>
 
-      {/* 필독 항목 */}
       <div className="card">
         <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2"><Pin size={16} className="text-[#e94560]" />필독 목록</h2>
         <div className="space-y-2">
           {NOTICE_ITEMS.map((item) => {
+            if (item === 'ABOUT 1991RUNNERS') {
+              return (
+                <Link key={item} href="/about" className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#e94560] shrink-0"></span>
+                  <span className="text-sm font-medium text-gray-800">{item}</span>
+                  <span className="ml-auto text-xs text-gray-400">→</span>
+                </Link>
+              )
+            }
+
             const post = posts?.find(p => p.title === item)
             return (
               <div key={item}>
@@ -50,7 +59,6 @@ export default async function NoticePage() {
         </div>
       </div>
 
-      {/* 전체 목록 */}
       {posts && posts.length > 0 && (
         <div className="card p-0 overflow-hidden">
           <div className="divide-y divide-gray-100">
