@@ -140,15 +140,15 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         {/* 참여 여부 */}
         {!isPast && (
           <div className="border-t border-gray-100 pt-4 mt-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-gray-700">
-                참여 여부를 알려주세요
+            <div className="mb-3">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <p className="text-sm font-medium text-gray-700 whitespace-nowrap">참여 여부를 알려주세요</p>
                 {event.max_attendees && (
-                  <span className={`ml-2 text-xs font-normal ${quotaFull ? 'text-red-500' : 'text-gray-400'}`}>
+                  <span className={`text-xs font-normal whitespace-nowrap ${quotaFull ? 'text-red-500' : 'text-gray-400'}`}>
                     ({attending.length}/{event.max_attendees}명)
                   </span>
                 )}
-              </p>
+              </div>
               {event.rsvp_deadline && !quotaFull && (
                 <span className={`text-xs ${rsvpDeadlineClosed ? 'text-red-500' : 'text-gray-400'}`}>
                   {rsvpDeadlineClosed ? '투표 마감됨' : `${formatKst(event.rsvp_deadline, 'M월 d일 HH:mm')}까지 투표`}
@@ -157,7 +157,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             </div>
             {rsvpClosed ? (
               <p className="text-sm text-gray-400 bg-gray-50 rounded-lg px-4 py-3">
-                {quotaFull ? `정원(${event.max_attendees}명)이 마감되어 참석 투표가 종료됐어요` : '투표 마감 시간이 지나 참여 여부를 변경할 수 없어요'}
+                {quotaFull ? '정원이 마감되어 참석 투표가 종료됐어요' : '투표 마감 시간이 지나 참여 여부를 변경할 수 없어요'}
               </p>
             ) : (
               <AttendanceButtons
