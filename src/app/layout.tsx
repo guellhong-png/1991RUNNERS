@@ -23,6 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-title" content="뛰꼬양" />
         <meta name="theme-color" content="#c0392b" />
         <link rel="apple-touch-icon" href="/icon-512.png" />
+        <script dangerouslySetInnerHTML={{
+          __html: `if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js')) }`
+        }} />
       </head>
       <body style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{children}</body>
     </html>
