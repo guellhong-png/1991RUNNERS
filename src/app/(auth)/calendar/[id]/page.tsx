@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { MapPin, Clock, User, ArrowLeft, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/types'
+import { RichText } from '@/lib/richtext'
 import AttendanceButtons from './AttendanceButtons'
 import DeleteEventButton from './DeleteEventButton'
 import KakaoShareButton from './KakaoShareButton'
@@ -133,7 +134,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
         {event.description && (
           <div className="border-t border-gray-100 pt-4">
-            <p className="text-gray-600 whitespace-pre-wrap">{event.description}</p>
+            <RichText content={event.description} className="text-gray-600" />
           </div>
         )}
 
