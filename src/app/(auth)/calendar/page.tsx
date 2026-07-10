@@ -50,8 +50,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const firstDayOfWeek = getDay(monthStart)
   const totalCells = Math.ceil((firstDayOfWeek + days.length) / 7) * 7
 
+  // UTC로 저장된 event_date를 KST(+9)로 변환해서 날짜 비교
+  const toKstDate = (isoString: string) => {
+    const utc = new Date(isoString)
+    return new Date(utc.getTime() + 9 * 60 * 60 * 1000)
+  }
+
   const getEventsForDay = (day: Date) =>
-    events?.filter(e => isSameDay(new Date(e.event_date), day)) ?? []
+    events?.filter(e => isSameDay(toKstDate(e.event_date), day)) ?? []
 
   const typeColors: Record<string, string> = {
     run: 'bg-blue-500',
