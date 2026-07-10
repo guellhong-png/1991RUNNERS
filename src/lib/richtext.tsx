@@ -32,10 +32,24 @@ export function RichText({ content, className }: { content: string; className?: 
   const lines = content.split('\n')
 
   function renderInline(text: string) {
-    const parts = text.split(/(\*\*[^*]+\*\*)/g)
+    // URL 패턴 + 볼드 패턴을 함께 처리
+    const parts = text.split(/(\*\*[^*]+\*\*|https?:\/\/[^\s]+)/g)
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
         return <strong key={i}>{part.slice(2, -2)}</strong>
+      }
+      if (part.match(/^https?:\/\//)) {
+        return (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 underline break-all hover:text-blue-700"
+          >
+            {part}
+          </a>
+        )
       }
       return <span key={i}>{part}</span>
     })
