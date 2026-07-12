@@ -45,7 +45,12 @@ export default function CalendarMobile({ events, year, month, days, firstDayOfWe
     const day = days[dayIdx]
     if (!day) return []
     const dateStr = day.split('T')[0]
-    return events.filter(e => e.event_date.split('T')[0] === dateStr)
+    // UTC로 저장된 event_date를 KST(+9)로 변환해서 날짜 비교
+    return events.filter(e => {
+      const kstDate = new Date(new Date(e.event_date).getTime() + 9 * 60 * 60 * 1000)
+      const kstDateStr = kstDate.toISOString().split('T')[0]
+      return kstDateStr === dateStr
+    })
   }
 
   const selectedEvents = selectedDay !== null ? getEventsForDay(selectedDay) : []
@@ -109,7 +114,7 @@ export default function CalendarMobile({ events, year, month, days, firstDayOfWe
                     </span>
                     <p className="text-xs font-medium text-gray-900 flex-1 truncate">{ev.title}</p>
                     <span className="text-xs text-gray-400 shrink-0">
-                      {format(new Date(ev.event_date), 'HH:mm')}
+                      {(() => { const kst = new Date(new Date(ev.event_date).getTime() + 9 * 60 * 60 * 1000); return `${String(kst.getUTCHours()).padStart(2,'0')}:${String(kst.getUTCMinutes()).padStart(2,'0')}` })()}
                     </span>
                   </div>
                 </Link>
