@@ -1,39 +1,39 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next') || '/dashboard'
   const supabase = createClient()
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-  const checkSession = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        router.replace('/dashboard')
-      } else {
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          router.replace(next)
+        } else {
+          setChecking(false)
+        }
+      } catch {
         setChecking(false)
       }
-    } catch {
-      setChecking(false)
     }
-  }
-
-  // 3초 후에도 로딩 중이면 강제로 로그인 화면 표시
-  const timeout = setTimeout(() => setChecking(false), 3000)
-  checkSession().finally(() => clearTimeout(timeout))
-
-  return () => clearTimeout(timeout)
-}, [])
+    const timeout = setTimeout(() => setChecking(false), 3000)
+    checkSession().finally(() => clearTimeout(timeout))
+    return () => clearTimeout(timeout)
+  }, [])
 
   const handleKakaoLogin = async () => {
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
     await supabase.auth.signInWithOAuth({
       provider: 'kakao',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo,
         scopes: 'profile_nickname profile_image account_email',
       },
     })
@@ -78,4 +78,8 @@ export default function LoginPage() {
       </div>
     </div>
   )
+}
+
+export default function LoginPage() {
+  return <Suspense><LoginForm /></Suspense>
 }
