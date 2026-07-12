@@ -1,5 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { format } from 'date-fns'
+
+function formatKst(isoString: string, pattern: string, opts?: any) {
+  const kst = new Date(new Date(isoString).getTime() + 9 * 60 * 60 * 1000)
+  const y = kst.getUTCFullYear(), m = kst.getUTCMonth(), d = kst.getUTCDate()
+  const h = kst.getUTCHours(), min = kst.getUTCMinutes()
+  return format(new Date(y, m, d, h, min), pattern, opts)
+}
 import { ko } from 'date-fns/locale'
 import Link from 'next/link'
 import { Calendar, Wallet, Users } from 'lucide-react'
@@ -21,7 +28,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link href="/calendar"><div className="card hover:shadow-md transition-shadow cursor-pointer">
           <div className="flex items-center justify-between mb-2"><span className="text-sm text-gray-500">다음 모임</span><Calendar size={20} className="text-blue-500" /></div>
-          <p className="text-2xl font-bold text-gray-900">{upcomingEvents?.[0] ? format(new Date(upcomingEvents[0].event_date), 'M월 d일', { locale: ko }) : '-'}</p>
+          <p className="text-2xl font-bold text-gray-900">{upcomingEvents?.[0] ? formatKst(upcomingEvents[0].event_date, 'M월 d일', { locale: ko }) : '-'}</p>
         </div></Link>
         <Link href="/finance"><div className="card hover:shadow-md transition-shadow cursor-pointer">
           <div className="flex items-center justify-between mb-2"><span className="text-sm text-gray-500">현재 회비 잔액</span><Wallet size={20} className="text-green-500" /></div>
@@ -44,12 +51,12 @@ export default async function DashboardPage() {
               <Link key={event.id} href={`/calendar/${event.id}`}>
                 <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="text-center min-w-10">
-                    <p className="text-xs text-gray-400">{format(new Date(event.event_date), 'M월', { locale: ko })}</p>
-                    <p className="text-xl font-bold text-[#e94560]">{format(new Date(event.event_date), 'd')}</p>
+                    <p className="text-xs text-gray-400">{formatKst(event.event_date, 'M월', { locale: ko })}</p>
+                    <p className="text-xl font-bold text-[#e94560]">{formatKst(event.event_date, 'd')}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900">{event.title}</p>
-                    <p className="text-xs text-gray-400">{event.location} · {format(new Date(event.event_date), 'HH:mm')}</p>
+                    <p className="text-xs text-gray-400">{event.location} · {formatKst(event.event_date, 'HH:mm')}</p>
                   </div>
                 </div>
               </Link>
