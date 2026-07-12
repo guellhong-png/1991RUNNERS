@@ -9,7 +9,7 @@ export default async function CheckinPage({ params }: { params: Promise<{ token:
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect(`/login?next=/calendar/checkin/${token}`)
 
   const { data: event } = await supabase.from('events').select('*').eq('checkin_token', token).single()
   if (!event) {
