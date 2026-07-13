@@ -150,6 +150,7 @@ export default function RacesPage() {
           onChange={e => setSearchQuery(e.target.value)}
           placeholder="🔍 대회명, 지역 검색..."
           className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#c0392b] text-gray-700 w-48"
+          style={{ fontSize: '16px' }}
         />
         <div className="flex gap-2 items-center ml-auto">
           <select value={distanceFilter} onChange={e => setDistanceFilter(e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#c0392b] text-gray-700">
@@ -168,9 +169,6 @@ export default function RacesPage() {
           <div className="flex border border-gray-200 rounded-lg overflow-hidden">
             <button onClick={() => setView('list')} className={'px-3 py-1.5 text-xs transition-colors ' + (view === 'list' ? 'bg-[#c0392b] text-white' : 'text-gray-500 hover:bg-gray-50')}>
               📋 목록
-            </button>
-            <button onClick={() => setView('calendar')} className={'px-3 py-1.5 text-xs transition-colors ' + (view === 'calendar' ? 'bg-[#c0392b] text-white' : 'text-gray-500 hover:bg-gray-50')}>
-              📅 캘린더
             </button>
           </div>
         </div>
