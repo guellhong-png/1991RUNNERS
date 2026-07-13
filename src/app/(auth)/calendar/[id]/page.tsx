@@ -107,14 +107,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               <div className="flex items-center gap-2 flex-wrap">
                 <span>{event.location}</span>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => { location.href = event.location_url }}
+                  <a href={event.location_url}
                     className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full hover:bg-yellow-200 transition-colors">
                     카카오맵
-                  </button>
-                  <button onClick={() => { location.href = `https://map.naver.com/v5/search/${encodeURIComponent(event.location)}` }}
+                  </a>
+                  <a href={`https://map.naver.com/v5/search/${encodeURIComponent(event.location)}`}
                     className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors">
                     네이버지도
-                  </button>
+                  </a>
                 </div>
               </div>
             ) : (
