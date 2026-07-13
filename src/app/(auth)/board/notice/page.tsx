@@ -48,22 +48,6 @@ export default async function NoticePage() {
           })}
         </div>
       </div>
-
-      {posts && posts.length > 0 && (
-        <div className="card p-0 overflow-hidden">
-          <div className="divide-y divide-gray-100">
-            {posts.map((post) => (
-              <Link key={post.id} href={`/board/${post.id}`}>
-                <div className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
-                  <Pin size={14} className="text-[#e94560] shrink-0" />
-                  <div className="flex-1 min-w-0"><p className="font-medium text-gray-900 truncate">{post.title}</p></div>
-                  <div className="text-right shrink-0"><p className="text-xs text-gray-400">{format(new Date(post.created_at), 'M/d', { locale: ko })}</p></div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
