@@ -14,7 +14,7 @@ export default async function ArchiveBoardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-gray-900">뛰꼬양 자료실</h1><p className="text-gray-500 mt-1">각종 자료를 확인하세요</p></div>
+        <div><h1 className="text-2xl font-bold text-gray-900">뛰꼬양 로고</h1><p className="text-gray-500 mt-1">각종 자료를 확인하세요</p></div>
         {profile?.role === 'admin' && (
           <Link href="/board/archive/new"><button className="btn-primary flex items-center gap-2"><Plus size={18} />글쓰기</button></Link>
         )}
