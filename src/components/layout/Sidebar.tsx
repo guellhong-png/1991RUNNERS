@@ -147,17 +147,14 @@ export default function Sidebar({ profile }: { profile: Profile }) {
               <Link href="/about" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/about') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
                 <BookOpen size={14} />뛰꼬양 소개
               </Link>
-              <Link href="/board/news" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/news') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
-                <Newspaper size={14} />뛰꼬양 소식
-              </Link>
               <Link href="/board/photo" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/photo') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
-                <Camera size={14} />뛰꼬양 사진 자료실
+                <Camera size={14} />뛰꼬양 사진
               </Link>
               <Link href="/board/history" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/history') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
                 <ClipboardList size={14} />뛰꼬양 히스토리
               </Link>
               <Link href="/board/archive" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/board/archive') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
-                <Archive size={14} />뛰꼬양 자료실
+                <Archive size={14} />뛰꼬양 로고
               </Link>
               <Link href="/gpx" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${isActive('/gpx') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
                 <Map size={14} />GPX 코스 모음
