@@ -60,7 +60,7 @@ export default function AttendanceButtons({ eventId, userId, currentStatus, atte
         <div className="flex gap-3">
           <button onClick={() => handleAttendance('attending')} disabled={loading}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all disabled:opacity-50 ${status === 'attending' ? 'bg-green-500 text-white shadow-md' : 'bg-green-50 text-green-700 hover:bg-green-100'}`}>
-            <Check size={16} />{status === 'attending' ? '참여 확정 ✓' : '참석'}
+            <Check size={16} />{status === 'attending' ? '참석 확정 ✓' : '참석'}
           </button>
           <button onClick={() => handleAttendance('not_attending')} disabled={loading}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all disabled:opacity-50 ${status === 'not_attending' ? 'bg-gray-500 text-white shadow-md' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}>
@@ -79,7 +79,7 @@ export default function AttendanceButtons({ eventId, userId, currentStatus, atte
             <div className="flex gap-3">
               <button onClick={() => handleAfterparty('attending')} disabled={loading}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all disabled:opacity-50 ${afterpartyStatus === 'attending' ? 'bg-[#c0392b] text-white shadow-md' : 'bg-red-50 text-red-700 hover:bg-red-100'}`}>
-                🍺 {afterpartyStatus === 'attending' ? '참여 확정 ✓' : '참석'}
+                🍺 {afterpartyStatus === 'attending' ? '참석 확정 ✓' : '참석'}
               </button>
               <button onClick={() => handleAfterparty('not_attending')} disabled={loading}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all disabled:opacity-50 ${afterpartyStatus === 'not_attending' ? 'bg-gray-500 text-white shadow-md' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}>
