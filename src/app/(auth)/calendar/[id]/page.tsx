@@ -145,7 +145,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           <div className="border-t border-gray-100 pt-4 mt-4">
             <div className="mb-3">
               <div className="flex items-center gap-2 flex-wrap mb-1">
-                <p className="text-sm font-medium text-gray-700 whitespace-nowrap">참여 여부를 알려주세요</p>
+                <p className="text-sm font-medium text-gray-700 whitespace-nowrap">참석 여부를 알려주세요</p>
                 {event.max_attendees && (
                   <span className={`text-xs font-normal whitespace-nowrap ${quotaFull ? 'text-red-500' : 'text-gray-400'}`}>
                     ({attending.length}/{event.max_attendees}명)
@@ -183,7 +183,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="w-2 h-2 rounded-full bg-green-400"></span>
-              <span className="text-sm font-medium text-gray-700">참여 ({attending.length}명)</span>
+              <span className="text-sm font-medium text-gray-700">참석 ({attending.length}명)</span>
             </div>
             <div className="space-y-2">
               {attending.length === 0 && <p className="text-xs text-gray-400">아직 없어요</p>}
@@ -227,7 +227,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         {event.has_afterparty && (
           <div className="mt-4 pt-4 border-t border-gray-100">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-medium text-gray-700">🍺 뒷풀이 참여 ({afterpartyAttending.length}명)</span>
+              <span className="text-sm font-medium text-gray-700">🍺 뒷풀이 참석 ({afterpartyAttending.length}명)</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {afterpartyAttending.length === 0 && <p className="text-xs text-gray-400">아직 없어요</p>}
