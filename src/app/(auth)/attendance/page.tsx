@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import AttendanceTable from './AttendanceTable'
 import EventTable from './EventTable'
+import EventTable from './EventTable'
 
 const OFFICIAL_TYPES = ['run', 'ddayrun', 'event', 'race']
 
@@ -79,6 +80,18 @@ export default async function AttendancePage() {
           currentPeriod={currentPeriod}
           isAdmin={isAdmin}
         />
+        {isAdmin && (
+          <div className="mt-6">
+            <h3 className="text-sm font-bold text-gray-700 mb-2">✏️ 운영진 출석 수정</h3>
+            <p className="text-xs text-gray-400 mb-3">셀을 클릭하면 출석을 수동으로 추가/제거할 수 있어요</p>
+            <EventTable
+              profiles={profiles ?? []}
+              events={officialEvents ?? []}
+              attendanceMap={checkinMap}
+              isAdmin={true}
+            />
+          </div>
+        )}
       </div>
       <div>
         <h2 className="text-lg font-bold text-gray-900 mb-4">내가 참여한 모임들</h2>
