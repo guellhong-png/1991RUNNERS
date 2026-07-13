@@ -96,7 +96,7 @@ export default function RacesPage() {
       event_type: 'race',
       description: race.homepage_url ? '공식 홈페이지: ' + race.homepage_url : '',
     })
-    router.push('/calendar/new?' + params.toString())
+    router.push('/calendar/new?' + params.toString() + '&back=/races')
   }
 
   const calYear = calMonth.getFullYear()
