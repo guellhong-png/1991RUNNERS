@@ -29,6 +29,7 @@ export default async function AttendancePage() {
     .order('event_date', { ascending: false })
 
   const { data: allEvents } = await supabase.from('events').select('id, title, event_date, event_type')
+    .lt('event_date', new Date().toISOString())
     .order('event_date', { ascending: false }).limit(20)
 
   // 공식 활동 참석 조건: 사전 참석 표시(status: attending) + QR 체크인(checked_in: true) 둘 다 필수
