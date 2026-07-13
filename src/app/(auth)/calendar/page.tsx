@@ -88,13 +88,11 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   return (
     <div className="space-y-6">
       <CalendarBadgeClear />
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">뛰꼬양 캘린더</h1>
-          <p className="text-gray-500 mt-1">모임 일정을 확인하고 참여 여부를 알려주세요</p>
-        </div>
-        <Link href="/calendar/new">
-          <button className="btn-primary flex items-center gap-2 whitespace-nowrap text-sm px-4 py-2"><Plus size={16} />모임 만들기</button>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">뛰꼬양 캘린더</h1>
+        <p className="text-gray-500 mt-1">모임 일정을 확인하고 참석 여부를 알려주세요</p>
+        <Link href="/calendar/new" className="mt-3 block">
+          <button className="btn-primary flex items-center gap-2 w-full justify-center"><Plus size={16} />모임 만들기</button>
         </Link>
       </div>
 
