@@ -86,7 +86,6 @@ export function RichText({ content, className }: { content: string; className?: 
             if (IMAGE_EXTS.includes(ext)) {
               return (
                 <div key={i} className="mt-2 mb-2">
-                  <p className="text-xs text-gray-400 mb-1">{name}</p>
                   <img
                     src={url}
                     alt={name}
