@@ -93,7 +93,12 @@ export default function EventTable({ profiles, events, attendanceMap, isAdmin }:
         </div>
       )}
 
-      {/* 검색 */}
+      {isAdmin && (
+        <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg">
+          <span className="text-blue-500 text-sm">✏️</span>
+          <p className="text-xs text-blue-600 font-medium">운영진 전용 — 참석 셀을 클릭해서 수정할 수 있어요</p>
+        </div>
+      )}
       <div className="relative mb-3">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input value={search} onChange={e => { setSearch(e.target.value); setPage(0) }}
