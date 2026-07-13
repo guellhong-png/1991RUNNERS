@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, MapPin, Search, X, Image, Check } from 'lucide-react'
 import Link from 'next/link'
+import { RichTextEditor } from '@/lib/RichTextEditor'
 
 declare global {
   interface Window { Kakao: any }
@@ -257,8 +258,7 @@ export default function NewEventPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">상세 내용</label>
-              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="input h-28 resize-none" placeholder="거리, 페이스, 준비물 등" />
+              <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} rows={5} />
             </div>
 
             <div>
