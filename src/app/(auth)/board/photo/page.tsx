@@ -14,7 +14,7 @@ export default async function PhotoPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-gray-900">뛰꼬양 사진 자료실</h1><p className="text-gray-500 mt-1">함께한 순간들을 모아봐요</p></div>
+        <div><h1 className="text-2xl font-bold text-gray-900">뛰꼬양 사진</h1><p className="text-gray-500 mt-1">함께한 순간들을 모아봐요</p></div>
         {profile?.role === 'admin' && (
           <Link href="/board/photo/new"><button className="btn-primary flex items-center gap-2"><Plus size={18} />글쓰기</button></Link>
         )}
