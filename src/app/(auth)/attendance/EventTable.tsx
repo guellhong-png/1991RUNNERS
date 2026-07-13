@@ -110,22 +110,24 @@ export default function EventTable({ profiles, events, attendanceMap, isAdmin }:
                 <th className="px-3 py-3 font-medium text-gray-600 text-center min-w-12">총</th>
                 {events.map(event => (
                   <th key={event.id} className="px-2 py-3 font-medium text-gray-600 text-center min-w-16 relative">
-                    <div className={`inline-flex px-1.5 py-0.5 rounded text-xs mb-1 whitespace-nowrap ${TYPE_COLORS[event.event_type] || 'bg-gray-100 text-gray-600'}`}>
-                      {TYPE_LABELS[event.event_type] || event.event_type}
-                    </div>
-                    <div className="text-gray-400 font-normal">{format(new Date(event.event_date), 'M/d', { locale: ko })}</div>
-                    <div
-                      className="text-gray-500 truncate max-w-14 cursor-pointer relative"
-                      onMouseEnter={() => setTooltip(event.id)}
-                      onMouseLeave={() => setTooltip(null)}
-                      onClick={() => setTooltip(tooltip === event.id ? null : event.id)}
-                    >
-                      {event.title}
-                      {tooltip === event.id && (
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-20 shadow-lg">
-                          {event.title}
-                        </div>
-                      )}
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className={`inline-flex px-1.5 py-0.5 rounded text-xs whitespace-nowrap ${TYPE_COLORS[event.event_type] || 'bg-gray-100 text-gray-600'}`}>
+                        {TYPE_LABELS[event.event_type] || event.event_type}
+                      </div>
+                      <div className="text-gray-400 font-normal text-xs">{format(new Date(event.event_date), 'M/d', { locale: ko })}</div>
+                      <div
+                        className="text-gray-500 text-xs truncate max-w-14 cursor-pointer relative"
+                        onMouseEnter={() => setTooltip(event.id)}
+                        onMouseLeave={() => setTooltip(null)}
+                        onClick={() => setTooltip(tooltip === event.id ? null : event.id)}
+                      >
+                        {event.title}
+                        {tooltip === event.id && (
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-20 shadow-lg">
+                            {event.title}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </th>
                 ))}
