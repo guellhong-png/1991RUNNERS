@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { createClient } from '@/lib/supabase/client'
 
 const TYPE_LABELS: Record<string, string> = {
   run: '정기런', ddayrun: '뛰꼬양데이', event: '행사', race: '대회', social: '벙개',
@@ -31,54 +30,15 @@ export default function EventTable({ profiles, events, attendanceMap, isAdmin }:
   attendanceMap: Record<string, string[]>
   isAdmin?: boolean
 }) {
-  const supabase = createClient()
   const [page, setPage] = useState(0)
-  const [localMap, setLocalMap] = useState<Record<string, string[]>>(attendanceMap)
-  const [loading, setLoading] = useState<string | null>(null)
 
-  const getCount = (userId: string) => localMap[userId]?.length ?? 0
+  const getCount = (userId: string) => attendanceMap[userId]?.length ?? 0
   const sorted = [...profiles].sort((a, b) => getCount(b.id) - getCount(a.id))
   const totalPages = Math.ceil(sorted.length / PAGE_SIZE)
   const paged = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
-  const handleToggle = async (userId: string, eventId: string) => {
-    if (!isAdmin) return
-    const key = `${userId}_${eventId}`
-    setLoading(key)
-
-    const attended = (localMap[userId] ?? []).includes(eventId)
-
-    if (attended) {
-      // 출석 제거
-      await supabase.from('attendances')
-        .update({ status: 'not_attending', checked_in: false, checked_in_at: null })
-        .eq('user_id', userId).eq('event_id', eventId)
-      setLocalMap(prev => ({
-        ...prev,
-        [userId]: (prev[userId] ?? []).filter(id => id !== eventId)
-      }))
-    } else {
-      // 출석 추가 - upsert
-      await supabase.from('attendances').upsert({
-        user_id: userId,
-        event_id: eventId,
-        status: 'attending',
-        checked_in: true,
-        checked_in_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,event_id' })
-      setLocalMap(prev => ({
-        ...prev,
-        [userId]: [...(prev[userId] ?? []), eventId]
-      }))
-    }
-    setLoading(null)
-  }
-
   return (
     <div>
-      {isAdmin && (
-        <p className="text-xs text-gray-400 mb-2">✏️ 셀을 클릭하면 출석을 수동으로 수정할 수 있어요</p>
-      )}
       <div className="card p-0 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="text-xs">
@@ -108,21 +68,12 @@ export default function EventTable({ profiles, events, attendanceMap, isAdmin }:
                   </td>
                   <td className="px-3 py-3 text-center font-bold text-[#c0392b]">{getCount(profile.id)}</td>
                   {events.map(event => {
-                    const attended = (localMap[profile.id] ?? []).includes(event.id)
-                    const key = `${profile.id}_${event.id}`
+                    const attended = (attendanceMap[profile.id] ?? []).includes(event.id)
                     return (
-                      <td
-                        key={event.id}
-                        className={`px-2 py-3 text-center ${isAdmin ? 'cursor-pointer hover:bg-gray-100' : ''}`}
-                        onClick={() => isAdmin && handleToggle(profile.id, event.id)}
-                      >
-                        {loading === key ? (
-                          <span className="text-gray-300 text-xs">...</span>
-                        ) : attended ? (
-                          <span className="text-green-500 font-bold">✓</span>
-                        ) : (
-                          <span className="text-gray-200">-</span>
-                        )}
+                      <td key={event.id} className="px-2 py-3 text-center">
+                        {attended
+                          ? <span className="text-green-500 font-bold">✓</span>
+                          : <span className="text-gray-200">-</span>}
                       </td>
                     )
                   })}
