@@ -31,8 +31,10 @@ export default async function AttendancePage() {
   const { data: allEvents } = await supabase.from('events').select('id, title, event_date, event_type')
     .order('event_date', { ascending: false }).limit(20)
 
+  // 공식 활동 참석 조건: 사전 참석 표시(status: attending) + QR 체크인(checked_in: true) 둘 다 필수
   const { data: checkinAttendances } = await supabase.from('attendances').select('event_id, user_id, status')
     .eq('checked_in', true)
+    .eq('status', 'attending')
 
   const { data: allAttendances } = await supabase.from('attendances').select('event_id, user_id, status')
     .eq('status', 'attending')
