@@ -187,7 +187,7 @@ export default function NewEventPage() {
     <>
       <div className="max-w-2xl">
         <div className="flex items-center gap-3 mb-6">
-          <Link href="/calendar" className="text-gray-400 hover:text-gray-600"><ArrowLeft size={20} /></Link>
+          <Link href={searchParams.get('back') || '/calendar'} className="text-gray-400 hover:text-gray-600"><ArrowLeft size={20} /></Link>
           <h1 className="text-2xl font-bold text-gray-900">새 모임 만들기</h1>
         </div>
         <div className="card">
@@ -325,7 +325,7 @@ export default function NewEventPage() {
               )}
             </div>
             <div className="flex gap-3 pt-2">
-              <Link href="/calendar" className="btn-secondary flex-1 text-center py-3">취소</Link>
+              <Link href={searchParams.get('back') || '/calendar'} className="btn-secondary flex-1 text-center py-3">취소</Link>
               <button type="submit" disabled={loading} className="btn-primary flex-1 py-3 disabled:opacity-50">
                 {loading ? '등록 중...' : '모임 등록'}
               </button>
