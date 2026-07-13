@@ -2,8 +2,6 @@ export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import EventTable from '../attendance/EventTable'
-import AttendanceTable from '../attendance/AttendanceTable'
 
 const OFFICIAL_TYPES = ['run', 'ddayrun', 'event', 'race']
 
@@ -32,9 +30,6 @@ export default async function AdminAttendancePage() {
     .eq('checked_in', true).eq('status', 'attending')
 
   const currentPeriod = getCurrentPeriod()
-  const { data: fees } = await supabase.from('membership_fees').select('user_id, paid').eq('period', currentPeriod)
-  const feeMap: Record<string, boolean> = {}
-  fees?.forEach(f => { feeMap[f.user_id] = f.paid })
 
   const officialEventIds = new Set(officialEvents?.map(e => e.id) ?? [])
   const checkinMap: Record<string, string[]> = {}
@@ -51,19 +46,7 @@ export default async function AdminAttendancePage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">공식 활동 출석부</h1>
-        <p className="text-gray-500 mt-1">QR 체크인 기준 · 정기런, 뛰꼬양데이, 행사, 대회</p>
-      </div>
-      <div>
-        <h2 className="text-lg font-bold text-gray-900 mb-2">출석 현황 요약</h2>
-        <p className="text-xs text-gray-400 mb-3">회비는 {currentPeriod} 기준</p>
-        <AttendanceTable
-          profiles={profiles ?? []}
-          attendanceMap={checkinMap}
-          eventTypeMap={officialEventTypeMap}
-          feeMap={feeMap}
-          currentPeriod={currentPeriod}
-          isAdmin={true}
-        />
+        <p className="text-gray-500 mt-1">QR 체크인 기준 · 정기런, 뛰꼬양데이, 행사, 대회 · {currentPeriod} 기준</p>
       </div>
     </div>
   )
