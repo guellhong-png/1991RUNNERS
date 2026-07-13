@@ -3,7 +3,6 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import AttendanceTable from './AttendanceTable'
 import EventTable from './EventTable'
-import EventTable from './EventTable'
 
 const OFFICIAL_TYPES = ['run', 'ddayrun', 'event', 'race']
 
