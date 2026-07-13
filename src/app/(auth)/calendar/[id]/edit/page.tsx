@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft, MapPin, Search, X, Image } from 'lucide-react'
 import Link from 'next/link'
+import { RichTextEditor } from '@/lib/RichTextEditor'
 
 const EVENT_TYPES = [
   { value: 'run', label: '정기런' },
@@ -292,7 +293,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">상세 내용</label>
-            <textarea value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} className="input h-28 resize-none" placeholder="거리, 페이스, 준비물 등" />
+            <RichTextEditor value={form.description} onChange={(v) => setForm({...form, description: v})} rows={5} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">사진 (1MB 이하)</label>
