@@ -157,9 +157,9 @@ export default function EventTable({ profiles, events, attendanceMap, isAdmin }:
                         className={`px-2 py-3 text-center ${isAdmin ? 'cursor-pointer hover:bg-gray-100' : ''}`}
                         onClick={() => handleCellClick(profile, event)}
                       >
-                        {attended
-                          ? <span className="text-green-600 font-medium text-xs">참석</span>
-                          : <span className="text-gray-200">-</span>}
+                      {attended
+                          ? <span className="inline-block bg-green-500 text-white text-xs font-medium px-2.5 py-0.5 rounded-full">참석</span>
+                          : <span className="text-gray-300">—</span>}
                       </td>
                     )
                   })}
