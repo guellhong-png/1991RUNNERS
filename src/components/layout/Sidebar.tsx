@@ -11,6 +11,7 @@ export default function Sidebar({ profile }: { profile: Profile }) {
   const router = useRouter()
   const supabase = createClient()
   const [boardOpen, setBoardOpen] = useState(pathname.startsWith('/board'))
+  const [adminOpen, setAdminOpen] = useState(pathname.startsWith('/admin'))
   const [mobileOpen, setMobileOpen] = useState(false)
   const [editProfileOpen, setEditProfileOpen] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
@@ -166,7 +167,28 @@ export default function Sidebar({ profile }: { profile: Profile }) {
         </div>
         <NavItem href="/attendance" icon={<ClipboardList size={18} />} label="뛰꼬양 출석표" />
         <NavItem href="/finance" icon={<Wallet size={18} />} label="회비 내역" />
-        <NavItem href="/admin" icon={<Settings size={18} />} label="관리자" adminOnly />
+        {profile.role === 'admin' && (
+          <div>
+            <button
+              onClick={() => setAdminOpen(!adminOpen)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm w-full transition-colors ${pathname.startsWith('/admin') ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
+            >
+              <Settings size={18} />
+              <span className="flex-1 text-left">관리자</span>
+              {adminOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </button>
+            {adminOpen && (
+              <div className="ml-4 mt-1 space-y-1">
+                <Link href="/admin" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${pathname === '/admin' ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+                  <Users size={14} />가입 현황
+                </Link>
+                <Link href="/admin/attendance" onClick={() => setMobileOpen(false)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors ${pathname === '/admin/attendance' ? 'bg-[#c0392b] text-white' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}>
+                  <ClipboardList size={14} />공식 활동 출석부
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
       </nav>
       <div className="p-4 border-t border-white/10">
         <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:bg-white/10 hover:text-white transition-colors w-full">
