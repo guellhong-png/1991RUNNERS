@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import EventTable from '../../attendance/EventTable'
-import AttendanceTable from '../../attendance/AttendanceTable'
+import EventTable from '../attendance/EventTable'
+import AttendanceTable from '../attendance/AttendanceTable'
 
 const OFFICIAL_TYPES = ['run', 'ddayrun', 'event', 'race']
 
@@ -62,16 +62,6 @@ export default async function AdminAttendancePage() {
           eventTypeMap={officialEventTypeMap}
           feeMap={feeMap}
           currentPeriod={currentPeriod}
-          isAdmin={true}
-        />
-      </div>
-      <div>
-        <h2 className="text-lg font-bold text-gray-900 mb-2">모임별 출석 상세</h2>
-        <p className="text-xs text-gray-400 mb-3">셀 클릭 → 확인 팝업 후 참석/취소 수정 가능</p>
-        <EventTable
-          profiles={profiles ?? []}
-          events={officialEvents ?? []}
-          attendanceMap={checkinMap}
           isAdmin={true}
         />
       </div>
